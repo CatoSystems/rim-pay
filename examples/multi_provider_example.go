@@ -12,8 +12,6 @@ import (
 	"github.com/shopspring/decimal"
 
 	// Import providers
-	_ "github.com/CatoSystems/rim-pay/internal/providers/bpay"
-	_ "github.com/CatoSystems/rim-pay/internal/providers/masrvi"
 )
 
 func main() {
@@ -91,18 +89,18 @@ func processDefaultProviderPayment(client *rimpay.Client, ctx context.Context) {
 	phone, _ := phone.NewPhone("22334455")
 	amount := money.New(decimal.NewFromFloat(50.00), money.MRU)
 
-	request := &rimpay.PaymentRequest{
+	// Using B-PAY as default provider with provider-specific request
+	request := &rimpay.BPayPaymentRequest{
 		Amount:      amount,
 		PhoneNumber: phone,
 		Reference:   fmt.Sprintf("DEFAULT-%d", time.Now().Unix()),
-		Language:    rimpay.LanguageFrench,
+		Description: "Payment using default provider (B-PAY)",
 		Passcode:    "1234",
-		Description: "Payment using default provider",
 	}
 
-	fmt.Printf("   Using default provider for %s\n", amount.String())
+	fmt.Printf("   Using default provider (B-PAY) for %s\n", amount.String())
 	
-	response, err := client.ProcessPayment(ctx, request)
+	response, err := client.ProcessBPayPayment(ctx, request)
 	if err != nil {
 		fmt.Printf("   ❌ Payment failed: %v\n", err)
 		return
@@ -113,51 +111,63 @@ func processDefaultProviderPayment(client *rimpay.Client, ctx context.Context) {
 }
 
 func processSpecificProviderPayment(client *rimpay.Client, ctx context.Context, providerName string) {
-	phone, _ := phone.NewPhone("66778899")
+	phone, _ := phone.NewPhone("33112233")
 	amount := money.New(decimal.NewFromFloat(75.00), money.MRU)
-
-	request := &rimpay.PaymentRequest{
-		Amount:      amount,
-		PhoneNumber: phone,
-		Reference:   fmt.Sprintf("SPECIFIC-%s-%d", providerName, time.Now().Unix()),
-		Language:    rimpay.LanguageArabic,
-		Description: fmt.Sprintf("Payment using %s provider", providerName),
-		// MASRVI specific fields
-		SuccessURL:  "https://example.com/success",
-		FailureURL:  "https://example.com/failure",
-		CancelURL:   "https://example.com/cancel",
-		CallbackURL: "https://example.com/webhook",
-	}
 
 	fmt.Printf("   Forcing payment through %s provider\n", providerName)
 	fmt.Printf("   Amount: %s to %s\n", amount.String(), phone.ForProvider(true))
 
-	// For this example, we'll simulate provider switching
-	// In a real application, you might have a method to specify provider per request
-	fmt.Printf("   Note: Using %s provider as configured\n", providerName)
+	if providerName == "masrvi" {
+		request := &rimpay.MasrviPaymentRequest{
+			Amount:      amount,
+			PhoneNumber: phone,
+			Reference:   fmt.Sprintf("SPECIFIC-%s-%d", providerName, time.Now().Unix()),
+			Description: fmt.Sprintf("Payment using %s provider", providerName),
+			ReturnURL:   "https://example.com/return",
+			CallbackURL: "https://example.com/webhook",
+		}
 
-	response, err := client.ProcessPayment(ctx, request)
-	if err != nil {
-		fmt.Printf("   ❌ Payment failed via %s: %v\n", providerName, err)
-		return
+		response, err := client.ProcessMasrviPayment(ctx, request)
+		if err != nil {
+			fmt.Printf("   ❌ Payment failed via %s: %v\n", providerName, err)
+			return
+		}
+
+		fmt.Printf("   ✅ Payment successful via %s\n", response.Provider)
+		fmt.Printf("   Transaction ID: %s\n", response.TransactionID)
+		fmt.Printf("   Status: %s\n", response.Status)
+	} else {
+		// Default to B-PAY for other providers
+		request := &rimpay.BPayPaymentRequest{
+			Amount:      amount,
+			PhoneNumber: phone,
+			Reference:   fmt.Sprintf("SPECIFIC-%s-%d", providerName, time.Now().Unix()),
+			Description: fmt.Sprintf("Payment using %s provider", providerName),
+			Passcode:    "1234",
+		}
+
+		response, err := client.ProcessBPayPayment(ctx, request)
+		if err != nil {
+			fmt.Printf("   ❌ Payment failed via %s: %v\n", providerName, err)
+			return
+		}
+
+		fmt.Printf("   ✅ Payment successful via %s\n", response.Provider)
+		fmt.Printf("   Transaction ID: %s\n", response.TransactionID)
+		fmt.Printf("   Status: %s\n", response.Status)
 	}
-
-	fmt.Printf("   ✅ Payment successful via %s\n", response.Provider)
-	fmt.Printf("   Transaction ID: %s\n", response.TransactionID)
-	fmt.Printf("   Status: %s\n", response.Status)
 }
 
 func simulateProviderFailover(client *rimpay.Client, ctx context.Context) {
-	phone, _ := phone.NewPhone("88990011")
+	phone, _ := phone.NewPhone("24990011")
 	amount := money.New(decimal.NewFromFloat(100.00), money.MRU)
 
-	request := &rimpay.PaymentRequest{
+	request := &rimpay.BPayPaymentRequest{
 		Amount:      amount,
 		PhoneNumber: phone,
 		Reference:   fmt.Sprintf("FAILOVER-%d", time.Now().Unix()),
-		Language:    rimpay.LanguageFrench,
-		Passcode:    "1234",
 		Description: "Failover simulation payment",
+		Passcode:    "1234",
 	}
 
 	fmt.Printf("   Simulating provider failover scenario...\n")
@@ -165,7 +175,7 @@ func simulateProviderFailover(client *rimpay.Client, ctx context.Context) {
 
 	// Try primary provider (B-PAY)
 	fmt.Printf("   🔄 Trying primary provider (B-PAY)...\n")
-	response, err := client.ProcessPayment(ctx, request)
+	response, err := client.ProcessBPayPayment(ctx, request)
 	
 	if err != nil {
 		fmt.Printf("   ⚠️  Primary provider failed: %v\n", err)
@@ -175,14 +185,17 @@ func simulateProviderFailover(client *rimpay.Client, ctx context.Context) {
 			// Switch to MASRVI (simulate failover)
 			fmt.Printf("   🔄 Switching to fallback provider (MASRVI)...\n")
 			
-			// Modify request for MASRVI (remove passcode, add URLs)
-			request.Passcode = ""
-			request.SuccessURL = "https://example.com/success"
-			request.FailureURL = "https://example.com/failure"
-			request.CancelURL = "https://example.com/cancel"
-			request.CallbackURL = "https://example.com/webhook"
+			// Create a new MASRVI request
+			masrviRequest := &rimpay.MasrviPaymentRequest{
+				Amount:      amount,
+				PhoneNumber: phone,
+				Reference:   fmt.Sprintf("FAILOVER-MASRVI-%d", time.Now().Unix()),
+				Description: "Failover simulation payment via MASRVI",
+				ReturnURL:   "https://example.com/return",
+				CallbackURL: "https://example.com/webhook",
+			}
 			
-			response, err = client.ProcessPayment(ctx, request)
+			response, err = client.ProcessMasrviPayment(ctx, masrviRequest)
 			if err != nil {
 				fmt.Printf("   ❌ Fallback provider also failed: %v\n", err)
 				return
@@ -206,9 +219,9 @@ func processBulkPayments(client *rimpay.Client, ctx context.Context) {
 	}{
 		{"22334455", 25.00, "bpay", "Mauritel via B-PAY"},
 		{"33445566", 30.00, "masrvi", "Mauritel via MASRVI"},
-		{"66778899", 45.00, "bpay", "Mattel via B-PAY"},
-		{"77889900", 55.00, "masrvi", "Mattel via MASRVI"},
-		{"88990011", 35.00, "bpay", "Chinguitel via B-PAY"},
+		{"36778899", 45.00, "bpay", "Mattel via B-PAY"},
+		{"37889900", 55.00, "masrvi", "Mattel via MASRVI"},
+		{"48990011", 35.00, "bpay", "Chinguitel via B-PAY"},
 	}
 
 	fmt.Printf("   Processing %d bulk payments...\n", len(payments))
@@ -221,28 +234,32 @@ func processBulkPayments(client *rimpay.Client, ctx context.Context) {
 		phone, _ := phone.NewPhone(payment.phone)
 		amount := money.New(decimal.NewFromFloat(payment.amount), money.MRU)
 
-		request := &rimpay.PaymentRequest{
-			Amount:      amount,
-			PhoneNumber: phone,
-			Reference:   fmt.Sprintf("BULK-%d-%d", i+1, time.Now().Unix()),
-			Language:    rimpay.LanguageFrench,
-			Description: payment.description,
-		}
-
-		// Configure for specific provider (simulation)
-		fmt.Printf("   Note: In real implementation, you would configure the client for %s\n", payment.provider)
+		fmt.Printf("   Note: Using provider-specific request types for %s\n", payment.provider)
+		
+		var response *rimpay.PaymentResponse
+		var err error
 		
 		if payment.provider == "bpay" {
-			request.Passcode = "1234"
+			request := &rimpay.BPayPaymentRequest{
+				Amount:      amount,
+				PhoneNumber: phone,
+				Reference:   fmt.Sprintf("BULK-BPAY-%d-%d", i+1, time.Now().Unix()),
+				Description: payment.description,
+				Passcode:    "1234",
+			}
+			response, err = client.ProcessBPayPayment(ctx, request)
 		} else {
-			request.SuccessURL = "https://example.com/success"
-			request.FailureURL = "https://example.com/failure"
-			request.CancelURL = "https://example.com/cancel"
-			request.CallbackURL = "https://example.com/webhook"
+			request := &rimpay.MasrviPaymentRequest{
+				Amount:      amount,
+				PhoneNumber: phone,
+				Reference:   fmt.Sprintf("BULK-MASRVI-%d-%d", i+1, time.Now().Unix()),
+				Description: payment.description,
+				ReturnURL:   "https://example.com/return",
+				CallbackURL: "https://example.com/webhook",
+			}
+			response, err = client.ProcessMasrviPayment(ctx, request)
 		}
 
-		response, err := client.ProcessPayment(ctx, request)
-		
 		if err != nil {
 			fmt.Printf("   ❌ Failed: %v\n", err)
 			results["failed"]++

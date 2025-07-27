@@ -12,8 +12,6 @@ import (
 	"github.com/shopspring/decimal"
 
 	// Import providers
-	_ "github.com/CatoSystems/rim-pay/internal/providers/bpay"
-	_ "github.com/CatoSystems/rim-pay/internal/providers/masrvi"
 )
 
 func main() {
@@ -68,12 +66,12 @@ func main() {
 
 	// Example 2: Mattel payment
 	fmt.Println("\n📱 Example 2: Mattel Payment")
-	mattelPayment := createBPayPayment("66778899", 75.50, "Mattel customer payment")
+	mattelPayment := createBPayPayment("32334455", 75.50, "Mattel customer payment")
 	processBPayPayment(client, ctx, mattelPayment)
 
 	// Example 3: Chinguitel payment
 	fmt.Println("\n📱 Example 3: Chinguitel Payment")
-	chinguitelPayment := createBPayPayment("88990011", 125.25, "Chinguitel customer payment")
+	chinguitelPayment := createBPayPayment("44990011", 125.25, "Chinguitel customer payment")
 	processBPayPayment(client, ctx, chinguitelPayment)
 
 	fmt.Println("\n💡 B-PAY Features Demonstrated:")
@@ -89,16 +87,16 @@ func checkProviderAvailability(client *rimpay.Client, ctx context.Context) bool 
 	testPhone, _ := phone.NewPhone("22334455")
 	testAmount := money.New(decimal.NewFromFloat(1.00), money.MRU)
 	
-	testRequest := &rimpay.PaymentRequest{
+	testRequest := &rimpay.BPayPaymentRequest{
 		Amount:      testAmount,
 		PhoneNumber: testPhone,
 		Reference:   "AVAILABILITY-CHECK",
-		Language:    rimpay.LanguageFrench,
+		Description: "Availability test",
 		Passcode:    "0000", // This will fail, but we're testing auth
 	}
 
 	// This will fail at the payment step but succeed at authentication
-	_, err := client.ProcessPayment(ctx, testRequest)
+	_, err := client.ProcessBPayPayment(ctx, testRequest)
 	if err != nil {
 		if paymentErr, ok := err.(*rimpay.PaymentError); ok {
 			// If it's not an auth error, then auth worked
@@ -108,7 +106,7 @@ func checkProviderAvailability(client *rimpay.Client, ctx context.Context) bool 
 	return true
 }
 
-func createBPayPayment(phoneNumber string, amount float64, description string) *rimpay.PaymentRequest {
+func createBPayPayment(phoneNumber string, amount float64, description string) *rimpay.BPayPaymentRequest {
 	phone, err := phone.NewPhone(phoneNumber)
 	if err != nil {
 		log.Fatalf("Invalid phone number: %v", err)
@@ -116,25 +114,23 @@ func createBPayPayment(phoneNumber string, amount float64, description string) *
 
 	money := money.New(decimal.NewFromFloat(amount), money.MRU)
 
-	return &rimpay.PaymentRequest{
+	return &rimpay.BPayPaymentRequest{
 		Amount:      money,
 		PhoneNumber: phone,
 		Reference:   fmt.Sprintf("BPAY-%d", time.Now().UnixNano()),
-		Language:    rimpay.LanguageFrench,
-		Passcode:    "1234", // Customer's mobile money PIN
 		Description: description,
+		Passcode:    "1234", // Customer's mobile money PIN
 	}
 }
 
-func processBPayPayment(client *rimpay.Client, ctx context.Context, request *rimpay.PaymentRequest) {
+func processBPayPayment(client *rimpay.Client, ctx context.Context, request *rimpay.BPayPaymentRequest) {
 	fmt.Printf("   Processing: %s → %s\n", 
 		request.PhoneNumber.ForProvider(true), 
 		request.Amount.String())
 	fmt.Printf("   Reference: %s\n", request.Reference)
-	fmt.Printf("   Operator: %s\n", request.PhoneNumber.Operator())
 
 	// Process payment with automatic retry
-	response, err := client.ProcessPayment(ctx, request)
+	response, err := client.ProcessBPayPayment(ctx, request)
 	if err != nil {
 		fmt.Printf("   ❌ Payment failed: %v\n", err)
 		

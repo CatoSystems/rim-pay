@@ -1,6 +1,7 @@
 package rimpay
 
 import (
+	"github.com/CatoSystems/rim-pay/internal/errors"
 	"github.com/CatoSystems/rim-pay/internal/types"
 )
 
@@ -26,4 +27,16 @@ var (
 	NewPaymentError    = types.NewPaymentError
 	NewValidationError = types.NewValidationError
 	IsRetryableError   = types.IsRetryableError
+)
+
+// Re-export common errors
+var (
+	ErrInvalidConfig        = errors.ErrInvalidConfig
+	ErrInvalidRequest       = errors.ErrInvalidRequest
+	ErrProviderNotFound     = errors.ErrProviderNotFound
+	ErrInvalidProvider      = errors.ErrInvalidProvider
+	ErrPaymentFailed        = errors.ErrPaymentFailed
+	ErrAuthenticationFailed = errors.ErrAuthenticationFailed
+	ErrNetworkError         = errors.ErrNetworkError
+	ErrTimeout              = errors.ErrTimeout
 )

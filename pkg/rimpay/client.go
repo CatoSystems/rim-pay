@@ -1,173 +1,207 @@
+
 package rimpay
 
 import (
 	"context"
 	"fmt"
 	"sync"
-	"time"
-
-	"github.com/CatoSystems/rim-pay/internal/validation"
 )
 
-// Client represents the main RimPay client
+// Provider constants
+const (
+	ProviderBPay   = "bpay"
+	ProviderMasrvi = "masrvi"
+	
+	// Error message constants
+	providerNotAvailableMsg = "provider %s not available"
+)
+
+// Factory functions for creating providers - these will be set by provider packages
+var (
+	createBPayProvider   func(ProviderConfig, Logger) (PaymentProvider, error)
+	createMasrviProvider func(ProviderConfig, Logger) (PaymentProvider, error)
+)
+
+// RegisterBPayProvider registers the B-PAY provider factory
+func RegisterBPayProvider(factory func(ProviderConfig, Logger) (PaymentProvider, error)) {
+	createBPayProvider = factory
+}
+
+// RegisterMasrviProvider registers the MASRVI provider factory
+func RegisterMasrviProvider(factory func(ProviderConfig, Logger) (PaymentProvider, error)) {
+	createMasrviProvider = factory
+}
+
+// Client represents the main payment client
 type Client struct {
-	config    *Config
 	providers map[string]PaymentProvider
-	active    PaymentProvider
+	config    *Config
 	logger    Logger
-	validator Validator
 	mu        sync.RWMutex
 }
 
-// ClientOption represents client configuration option
-type ClientOption func(*Client) error
-
-// NewClient creates a new RimPay client
-func NewClient(config *Config, opts ...ClientOption) (*Client, error) {
+// NewClient creates a new payment client
+func NewClient(config *Config) (*Client, error) {
 	if config == nil {
-		return nil, fmt.Errorf("configuration is required")
+		return nil, ErrInvalidConfig
 	}
 
 	if err := config.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid configuration: %w", err)
+		return nil, fmt.Errorf("invalid config: %w", err)
 	}
 
-	client := &Client{
-		config:    config,
+	// Create a default logger if none provided
+	logger := newDefaultLogger(config.Logging)
+
+	return &Client{
 		providers: make(map[string]PaymentProvider),
-		logger:    newDefaultLogger(config.Logging),
-		validator: validation.NewValidator(),
-	}
-
-	// Apply options
-	for _, opt := range opts {
-		if err := opt(client); err != nil {
-			return nil, fmt.Errorf("failed to apply option: %w", err)
-		}
-	}
-
-	// Initialize providers
-	if err := client.initializeProviders(); err != nil {
-		return nil, fmt.Errorf("failed to initialize providers: %w", err)
-	}
-
-	// Set default provider
-	if err := client.SetProvider(config.DefaultProvider); err != nil {
-		return nil, fmt.Errorf("failed to set default provider: %w", err)
-	}
-
-	client.logger.Info("RimPay client initialized",
-		"environment", config.Environment,
-		"default_provider", config.DefaultProvider,
-	)
-
-	return client, nil
+		config:    config,
+		logger:    logger,
+	}, nil
 }
 
-// ProcessPayment processes a payment using active provider
-func (c *Client) ProcessPayment(ctx context.Context, request *PaymentRequest) (*PaymentResponse, error) {
-	start := time.Now()
+// newDefaultLogger creates a default logger
+func newDefaultLogger(config LoggingConfig) Logger {
+	return &simpleLogger{}
+}
 
+// Simple logger implementation
+type simpleLogger struct{}
+
+func (l *simpleLogger) Debug(msg string, fields ...interface{}) {
+	fmt.Printf("[DEBUG] %s %v\n", msg, fields)
+}
+
+func (l *simpleLogger) Info(msg string, fields ...interface{}) {
+	fmt.Printf("[INFO] %s %v\n", msg, fields)
+}
+
+func (l *simpleLogger) Warn(msg string, fields ...interface{}) {
+	fmt.Printf("[WARN] %s %v\n", msg, fields)
+}
+
+func (l *simpleLogger) Error(msg string, fields ...interface{}) {
+	fmt.Printf("[ERROR] %s %v\n", msg, fields)
+}
+
+// ProcessBPayPayment processes a payment using B-PAY provider
+func (c *Client) ProcessBPayPayment(ctx context.Context, request *BPayPaymentRequest) (*PaymentResponse, error) {
+	if request == nil {
+		return nil, ErrInvalidRequest
+	}
+
+	provider, ok := c.providers[ProviderBPay]
+	if !ok {
+		return nil, fmt.Errorf(providerNotAvailableMsg, ProviderBPay)
+	}
+
+	bpayProvider, ok := provider.(BPayProvider)
+	if !ok {
+		return nil, fmt.Errorf("provider %s does not implement BPayProvider interface", ProviderBPay)
+	}
+
+	return bpayProvider.ProcessBPayPayment(ctx, request)
+}
+
+// ProcessMasrviPayment processes a payment using MASRVI provider
+func (c *Client) ProcessMasrviPayment(ctx context.Context, request *MasrviPaymentRequest) (*PaymentResponse, error) {
+	if request == nil {
+		return nil, ErrInvalidRequest
+	}
+
+	provider, ok := c.providers[ProviderMasrvi]
+	if !ok {
+		return nil, fmt.Errorf(providerNotAvailableMsg, ProviderMasrvi)
+	}
+
+	masrviProvider, ok := provider.(MasrviProvider)
+	if !ok {
+		return nil, fmt.Errorf("provider %s does not implement MasrviProvider interface", ProviderMasrvi)
+	}
+
+	return masrviProvider.ProcessMasrviPayment(ctx, request)
+}
+
+// HandleMasrviNotification handles MASRVI webhook notifications
+func (c *Client) HandleMasrviNotification(notification *MasrviNotificationData) (*TransactionStatus, error) {
+	if notification == nil {
+		return nil, ErrInvalidRequest
+	}
+
+	provider, ok := c.providers[ProviderMasrvi]
+	if !ok {
+		return nil, fmt.Errorf(providerNotAvailableMsg, ProviderMasrvi)
+	}
+
+	masrviProvider, ok := provider.(MasrviProvider)
+	if !ok {
+		return nil, fmt.Errorf("provider %s does not implement MasrviProvider interface", ProviderMasrvi)
+	}
+
+	return masrviProvider.HandleNotification(notification)
+}
+
+// ProcessPayment processes a payment using the generic interface (deprecated)
+func (c *Client) ProcessPayment(ctx context.Context, request *PaymentRequest) (*PaymentResponse, error) {
+	if request == nil {
+		return nil, ErrInvalidRequest
+	}
+
+	// For backward compatibility, use the first available provider
 	c.mu.RLock()
-	provider := c.active
+	var provider PaymentProvider
+	for _, p := range c.providers {
+		provider = p
+		break
+	}
 	c.mu.RUnlock()
 
 	if provider == nil {
-		return nil, NewPaymentError(ErrorCodeProviderError, "no active payment provider", "", false)
-	}
-
-	// Validate request
-	if err := c.validator.ValidatePaymentRequest(request); err != nil {
-		return nil, err
-	}
-
-	// Check if expired
-	if request.IsExpired() {
-		return nil, NewPaymentError(ErrorCodePaymentExpired, "payment request has expired", "", false)
+		return nil, ErrProviderNotFound
 	}
 
 	// Check provider availability
 	if !provider.IsAvailable(ctx) {
-		return nil, NewPaymentError(
-			ErrorCodeProviderError,
-			"provider is not available",
-			provider.Name(),
-			false,
-		)
+		return nil, fmt.Errorf("provider %s is not available", provider.Name())
 	}
-
-	c.logger.Info("Processing payment",
-		"provider", provider.Name(),
-		"reference", request.Reference,
-		"amount", request.Amount.String(),
-	)
 
 	// Process payment
-	response, err := provider.ProcessPayment(ctx, request)
-
-	duration := time.Since(start)
-
-	if err != nil {
-		c.logger.Error("Payment processing failed",
-			"provider", provider.Name(),
-			"reference", request.Reference,
-			"error", err.Error(),
-			"duration", duration,
-		)
-		return nil, err
-	}
-
-	c.logger.Info("Payment processed",
-		"provider", provider.Name(),
-		"transaction_id", response.TransactionID,
-		"status", response.Status,
-		"duration", duration,
-	)
-
-	return response, nil
+	return provider.ProcessPayment(ctx, request)
 }
 
-// GetPaymentStatus retrieves payment status
+// GetPaymentStatus retrieves payment status from the first available provider
 func (c *Client) GetPaymentStatus(ctx context.Context, transactionID string) (*TransactionStatus, error) {
+	if transactionID == "" {
+		return nil, ErrInvalidRequest
+	}
+
 	c.mu.RLock()
-	provider := c.active
+	var provider PaymentProvider
+	for _, p := range c.providers {
+		provider = p
+		break
+	}
 	c.mu.RUnlock()
 
 	if provider == nil {
-		return nil, NewPaymentError(ErrorCodeProviderError, "no active payment provider", "", false)
-	}
-
-	if transactionID == "" {
-		return nil, NewValidationError("transaction_id", "is required")
+		return nil, ErrProviderNotFound
 	}
 
 	return provider.GetPaymentStatus(ctx, transactionID)
 }
 
-// SetProvider sets the active payment provider
-func (c *Client) SetProvider(providerName string) error {
+// AddProvider adds a payment provider to the client
+func (c *Client) AddProvider(name string, provider PaymentProvider) error {
+	if provider == nil {
+		return ErrInvalidProvider
+	}
+
 	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.providers[name] = provider
+	c.mu.Unlock()
 
-	provider, exists := c.providers[providerName]
-	if !exists {
-		return fmt.Errorf("provider not found: %s", providerName)
-	}
-
-	if err := provider.ValidateConfig(); err != nil {
-		return fmt.Errorf("provider configuration invalid: %w", err)
-	}
-
-	c.active = provider
-	c.logger.Info("Active provider changed", "provider", providerName)
+	c.logger.Info("Provider added", "name", name, "provider", provider.Name())
 	return nil
-}
-
-// GetActiveProvider returns currently active provider
-func (c *Client) GetActiveProvider() PaymentProvider {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.active
 }
 
 // ListProviders returns list of available providers
@@ -181,64 +215,3 @@ func (c *Client) ListProviders() []string {
 	}
 	return providers
 }
-
-// initializeProviders initializes payment providers
-func (c *Client) initializeProviders() error {
-	// TODO: Register providers here
-	
-	for name, config := range c.config.Providers {
-		if !config.Enabled {
-			c.logger.Debug("Skipping disabled provider", "provider", name)
-			continue
-		}
-
-		provider, err := c.createProvider(name, config)
-		if err != nil {
-			return fmt.Errorf("failed to create provider '%s': %w", name, err)
-		}
-
-		c.providers[name] = provider
-		c.logger.Info("Provider initialized", "provider", name)
-	}
-
-	if len(c.providers) == 0 {
-		return fmt.Errorf("no enabled providers found")
-	}
-
-	return nil
-}
-
-// createProvider creates a payment provider instance
-func (c *Client) createProvider(name string, config ProviderConfig) (PaymentProvider, error) {
-	return DefaultRegistry.Create(name, config, c.logger)
-}
-
-// WithLogger sets custom logger
-func WithLogger(logger Logger) ClientOption {
-	return func(c *Client) error {
-		c.logger = logger
-		return nil
-	}
-}
-
-// WithValidator sets custom validator
-func WithValidator(validator Validator) ClientOption {
-	return func(c *Client) error {
-		c.validator = validator
-		return nil
-	}
-}
-
-// newDefaultLogger creates default logger
-func newDefaultLogger(config LoggingConfig) Logger {
-	// Implementation would create appropriate logger based on config
-	return &defaultLogger{}
-}
-
-// defaultLogger implements basic logging
-type defaultLogger struct{}
-
-func (l *defaultLogger) Debug(msg string, fields ...interface{}) {}
-func (l *defaultLogger) Info(msg string, fields ...interface{})  {}
-func (l *defaultLogger) Warn(msg string, fields ...interface{})  {}
-func (l *defaultLogger) Error(msg string, fields ...interface{}) {}

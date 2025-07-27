@@ -42,6 +42,11 @@ func FromCents(cents int64, currency Currency) Money {
 	return New(amount, currency)
 }
 
+// NewMRU creates a new MRU (Mauritanian Ouguiya) amount from cents
+func NewMRU(cents int64) Money {
+	return FromCents(cents, MRU)
+}
+
 func (m Money) Amount() decimal.Decimal { return m.amount }
 func (m Money) Currency() Currency      { return m.currency }
 func (m Money) String() string          { return fmt.Sprintf("%s %s", m.amount.StringFixed(2), m.currency) }

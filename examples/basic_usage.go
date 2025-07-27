@@ -10,10 +10,6 @@ import (
 	"github.com/CatoSystems/rim-pay/pkg/phone"
 	"github.com/CatoSystems/rim-pay/pkg/rimpay"
 	"github.com/shopspring/decimal"
-
-	// Import providers to register them
-	_ "github.com/CatoSystems/rim-pay/internal/providers/bpay"
-	_ "github.com/CatoSystems/rim-pay/internal/providers/masrvi"
 )
 
 func main() {
@@ -29,21 +25,41 @@ func main() {
 		log.Fatalf("Failed to create client: %v", err)
 	}
 
-	// Step 3: Create payment request
-	request, err := createPaymentRequest()
-	if err != nil {
-		log.Fatalf("Failed to create payment request: %v", err)
-	}
-
-	// Step 4: Process payment
-	fmt.Printf("📱 Processing payment...\n")
-	fmt.Printf("   Amount: %s\n", request.Amount.String())
-	fmt.Printf("   Phone: %s\n", request.PhoneNumber.ForProvider(true))
-	fmt.Printf("   Reference: %s\n", request.Reference)
-	fmt.Printf("   Provider: %s\n\n", config.DefaultProvider)
-
+	// Step 3: Create provider-specific payment request
 	ctx := context.Background()
-	response, err := client.ProcessPayment(ctx, request)
+	var response *rimpay.PaymentResponse
+	
+	if config.DefaultProvider == "bpay" {
+		request, err := createBPayPaymentRequest()
+		if err != nil {
+			log.Fatalf("Failed to create B-PAY payment request: %v", err)
+		}
+		
+		// Step 4: Process B-PAY payment
+		fmt.Printf("📱 Processing B-PAY payment...\n")
+		fmt.Printf("   Amount: %s\n", request.Amount.String())
+		fmt.Printf("   Phone: %s\n", request.PhoneNumber.ForProvider(true))
+		fmt.Printf("   Reference: %s\n", request.Reference)
+		fmt.Printf("   Provider: %s\n\n", config.DefaultProvider)
+
+		response, err = client.ProcessBPayPayment(ctx, request)
+	} else if config.DefaultProvider == "masrvi" {
+		request, err := createMasrviPaymentRequest()
+		if err != nil {
+			log.Fatalf("Failed to create MASRVI payment request: %v", err)
+		}
+		
+		// Step 4: Process MASRVI payment
+		fmt.Printf("📱 Processing MASRVI payment...\n")
+		fmt.Printf("   Amount: %s\n", request.Amount.String())
+		fmt.Printf("   Phone: %s\n", request.PhoneNumber.ForProvider(true))
+		fmt.Printf("   Reference: %s\n", request.Reference)
+		fmt.Printf("   Provider: %s\n\n", config.DefaultProvider)
+
+		response, err = client.ProcessMasrviPayment(ctx, request)
+	} else {
+		log.Fatalf("Unsupported provider: %s", config.DefaultProvider)
+	}
 	
 	if err != nil {
 		handlePaymentError(err)
@@ -51,22 +67,26 @@ func main() {
 	}
 
 	// Step 5: Handle successful payment
-	fmt.Printf("✅ Payment successful!\n")
-	fmt.Printf("   Transaction ID: %s\n", response.TransactionID)
-	fmt.Printf("   Status: %s\n", response.Status)
-	fmt.Printf("   Provider: %s\n", response.Provider)
-	fmt.Printf("   Created: %s\n\n", response.CreatedAt.Format(time.RFC3339))
+	if response != nil {
+		fmt.Printf("✅ Payment successful!\n")
+		fmt.Printf("   Transaction ID: %s\n", response.TransactionID)
+		fmt.Printf("   Status: %s\n", response.Status)
+		fmt.Printf("   Provider: %s\n", response.Provider)
+		fmt.Printf("   Created: %s\n\n", response.CreatedAt.Format(time.RFC3339))
 
-	// Step 6: Check payment status (for B-PAY)
-	if config.DefaultProvider == "bpay" {
-		fmt.Printf("🔍 Checking payment status...\n")
-		status, err := client.GetPaymentStatus(ctx, response.TransactionID)
-		if err != nil {
-			fmt.Printf("❌ Failed to get status: %v\n", err)
-		} else {
-			fmt.Printf("   Status: %s\n", status.Status)
-			fmt.Printf("   Message: %s\n\n", status.Message)
+		// Step 6: Check payment status (for B-PAY)
+		if config.DefaultProvider == "bpay" {
+			fmt.Printf("🔍 Checking payment status...\n")
+			status, err := client.GetPaymentStatus(ctx, response.TransactionID)
+			if err != nil {
+				fmt.Printf("❌ Failed to get status: %v\n", err)
+			} else {
+				fmt.Printf("   Status: %s\n", status.Status)
+				fmt.Printf("   Message: %s\n\n", status.Message)
+			}
 		}
+	} else {
+		fmt.Printf("⚠️ Payment response is nil\n")
 	}
 
 	fmt.Println("🎉 Example completed successfully!")
@@ -108,7 +128,7 @@ func createConfig() *rimpay.Config {
 	}
 }
 
-func createPaymentRequest() (*rimpay.PaymentRequest, error) {
+func createBPayPaymentRequest() (*rimpay.BPayPaymentRequest, error) {
 	// Create phone number
 	phoneNumber, err := phone.NewPhone("22334455") // Mauritel number
 	if err != nil {
@@ -118,19 +138,34 @@ func createPaymentRequest() (*rimpay.PaymentRequest, error) {
 	// Create amount (100 MRU)
 	amount := money.New(decimal.NewFromFloat(100.00), money.MRU)
 
-	// Create payment request
-	return &rimpay.PaymentRequest{
+	// Create B-PAY specific payment request
+	return &rimpay.BPayPaymentRequest{
 		Amount:      amount,
 		PhoneNumber: phoneNumber,
-		Reference:   fmt.Sprintf("ORDER-%d", time.Now().Unix()),
-		Language:    rimpay.LanguageFrench,
-		Passcode:    "1234", // For B-PAY
-		Description: "Test payment via RimPay",
-		// Optional URLs for MASRVI
-		SuccessURL:  "https://yourapp.com/success",
-		FailureURL:  "https://yourapp.com/failure",
-		CancelURL:   "https://yourapp.com/cancel",
-		CallbackURL: "https://yourapp.com/webhook",
+		Reference:   fmt.Sprintf("BPAY-ORDER-%d", time.Now().Unix()),
+		Description: "Test B-PAY payment via RimPay",
+		Passcode:    "1234", // B-PAY specific
+	}, nil
+}
+
+func createMasrviPaymentRequest() (*rimpay.MasrviPaymentRequest, error) {
+	// Create phone number
+	phoneNumber, err := phone.NewPhone("22334455") // Mauritel number
+	if err != nil {
+		return nil, fmt.Errorf("invalid phone number: %w", err)
+	}
+
+	// Create amount (100 MRU)
+	amount := money.New(decimal.NewFromFloat(100.00), money.MRU)
+
+	// Create MASRVI specific payment request
+	return &rimpay.MasrviPaymentRequest{
+		Amount:      amount,
+		PhoneNumber: phoneNumber,
+		Reference:   fmt.Sprintf("MASRVI-ORDER-%d", time.Now().Unix()),
+		Description: "Test MASRVI payment via RimPay",
+		CallbackURL: "https://yourapp.com/webhook/masrvi", // MASRVI specific
+		ReturnURL:   "https://yourapp.com/return",         // MASRVI specific
 	}, nil
 }
 

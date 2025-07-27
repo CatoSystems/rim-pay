@@ -21,11 +21,11 @@ func TestNewClient(t *testing.T) {
 	}
 	config.DefaultProvider = "test"
 
-	// This test would fail in real implementation since we don't have
-	// actual provider implementations, but shows the structure
-	_, err := NewClient(config)
-	// For now, we expect an error since providers aren't implemented
-	assert.Error(t, err)
+	// With the new architecture, NewClient should succeed
+	// as providers are registered and initialized lazily
+	client, err := NewClient(config)
+	assert.NoError(t, err)
+	assert.NotNil(t, client)
 }
 
 func TestConfigValidation(t *testing.T) {

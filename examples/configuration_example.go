@@ -7,8 +7,6 @@ import (
 	"github.com/CatoSystems/rim-pay/pkg/rimpay"
 
 	// Import providers
-	_ "github.com/CatoSystems/rim-pay/internal/providers/bpay"
-	_ "github.com/CatoSystems/rim-pay/internal/providers/masrvi"
 )
 
 func main() {

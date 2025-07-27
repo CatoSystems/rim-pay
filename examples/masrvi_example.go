@@ -13,7 +13,6 @@ import (
 	"github.com/shopspring/decimal"
 
 	// Import providers
-	_ "github.com/CatoSystems/rim-pay/internal/providers/masrvi"
 )
 
 func main() {
@@ -62,7 +61,7 @@ func main() {
 	// Example 2: Service payment with phone number
 	fmt.Println("\n💳 Example 2: Service Payment")
 	servicePayment := createMasrviPayment(
-		"77889900", // Mattel number
+		"37889900", // Mattel number
 		45.00,      // Amount
 		"Internet service payment",
 		"INTERNET-BILL-789",
@@ -72,7 +71,7 @@ func main() {
 	// Example 3: Mobile top-up
 	fmt.Println("\n📱 Example 3: Mobile Top-up")
 	topupPayment := createMasrviPayment(
-		"88990011", // Chinguitel number
+		"48990011", // Chinguitel number
 		25.50,      // Amount
 		"Mobile credit top-up",
 		"TOPUP-"+fmt.Sprintf("%d", time.Now().Unix()),
@@ -98,7 +97,7 @@ func main() {
 	select {} // Keep running
 }
 
-func createMasrviPayment(phoneNumber string, amount float64, description, reference string) *rimpay.PaymentRequest {
+func createMasrviPayment(phoneNumber string, amount float64, description, reference string) *rimpay.MasrviPaymentRequest {
 	phone, err := phone.NewPhone(phoneNumber)
 	if err != nil {
 		log.Fatalf("Invalid phone number: %v", err)
@@ -106,30 +105,26 @@ func createMasrviPayment(phoneNumber string, amount float64, description, refere
 
 	money := money.New(decimal.NewFromFloat(amount), money.MRU)
 
-	return &rimpay.PaymentRequest{
+	return &rimpay.MasrviPaymentRequest{
 		Amount:      money,
 		PhoneNumber: phone,
 		Reference:   reference,
-		Language:    rimpay.LanguageFrench,
 		Description: description,
 		// MASRVI specific URLs
-		SuccessURL:  "https://yourapp.com/payment/success",
-		FailureURL:  "https://yourapp.com/payment/failure", 
-		CancelURL:   "https://yourapp.com/payment/cancel",
+		ReturnURL:   "https://yourapp.com/payment/return",
 		CallbackURL: "https://yourapp.com/webhook", // For notifications
 	}
 }
 
-func processMasrviPayment(client *rimpay.Client, ctx context.Context, request *rimpay.PaymentRequest) {
+func processMasrviPayment(client *rimpay.Client, ctx context.Context, request *rimpay.MasrviPaymentRequest) {
 	fmt.Printf("   Processing: %s → %s\n", 
 		request.PhoneNumber.ForProvider(true), 
 		request.Amount.String())
 	fmt.Printf("   Reference: %s\n", request.Reference)
 	fmt.Printf("   Description: %s\n", request.Description)
-	fmt.Printf("   Operator: %s\n", request.PhoneNumber.Operator())
 
 	// Process payment - this creates the payment form
-	response, err := client.ProcessPayment(ctx, request)
+	response, err := client.ProcessMasrviPayment(ctx, request)
 	if err != nil {
 		fmt.Printf("   ❌ Payment failed: %v\n", err)
 		

@@ -3,9 +3,18 @@ package masrvi
 import (
 	"context"
 	"fmt"
+	"time"
 	"github.com/CatoSystems/rim-pay/internal/providers/common"
+	"github.com/CatoSystems/rim-pay/internal/types"
 	"github.com/CatoSystems/rim-pay/pkg/rimpay"
 )
+
+// Register the MASRVI provider with the client
+func init() {
+	rimpay.RegisterMasrviProvider(func(config rimpay.ProviderConfig, logger rimpay.Logger) (rimpay.PaymentProvider, error) {
+		return NewMasrviProvider(config, logger)
+	})
+}
 
 // Provider implements the MASRVI payment provider
 type Provider struct {
@@ -18,8 +27,13 @@ type Provider struct {
 	logger           rimpay.Logger
 }
 
-// NewProvider creates a new MASRVI provider
+// NewProvider creates a new MASRVI provider (deprecated, use NewMasrviProvider)
 func NewProvider(config rimpay.ProviderConfig, logger rimpay.Logger) (*Provider, error) {
+	return NewMasrviProvider(config, logger)
+}
+
+// NewMasrviProvider creates a new MASRVI provider
+func NewMasrviProvider(config rimpay.ProviderConfig, logger rimpay.Logger) (*Provider, error) {
 	if err := validateConfig(config); err != nil {
 		return nil, fmt.Errorf("invalid MASRVI configuration: %w", err)
 	}
@@ -64,10 +78,26 @@ func (p *Provider) IsAvailable(ctx context.Context) bool {
 	return err == nil
 }
 
+// ProcessMasrviPayment processes a MASRVI payment using provider-specific request
+func (p *Provider) ProcessMasrviPayment(ctx context.Context, request *rimpay.MasrviPaymentRequest) (*types.PaymentResponse, error) {
+	if request == nil {
+		return nil, types.NewValidationError("request", "payment request cannot be nil")
+	}
+
+	if err := request.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Convert to generic request for internal processing
+	genericRequest := request.ToGenericRequest()
+	
+	return p.ProcessPayment(ctx, genericRequest)
+}
+
 // ProcessPayment processes a payment with retry logic
-func (p *Provider) ProcessPayment(ctx context.Context, request *rimpay.PaymentRequest) (*rimpay.PaymentResponse, error) {
+func (p *Provider) ProcessPayment(ctx context.Context, request *types.PaymentRequest) (*types.PaymentResponse, error) {
 	// Wrap the payment processing in a retryable function
-	retryablePayment := func() (*rimpay.PaymentResponse, error) {
+	retryablePayment := func() (*types.PaymentResponse, error) {
 		return p.paymentProcessor.ProcessPayment(ctx, request)
 	}
 
@@ -75,23 +105,36 @@ func (p *Provider) ProcessPayment(ctx context.Context, request *rimpay.PaymentRe
 	return p.retryExecutor.ExecutePayment(ctx, retryablePayment)
 }
 
-// GetPaymentStatus gets payment status
-// Note: MASRVI doesn't have a direct status check API, status comes via webhooks
+// GetPaymentStatus retrieves payment status for MASRVI
 func (p *Provider) GetPaymentStatus(ctx context.Context, transactionID string) (*rimpay.TransactionStatus, error) {
-	return &rimpay.TransactionStatus{
+	if transactionID == "" {
+		return nil, types.NewValidationError("transactionID", "transaction ID cannot be empty")
+	}
+
+	// For now, return a basic status since we don't have the full implementation
+	status := &rimpay.TransactionStatus{
 		TransactionID: transactionID,
 		Status:        rimpay.PaymentStatusPending,
 		Reference:     transactionID,
-		Message:       "Status check not supported, use webhook notifications",
-		ProviderData: map[string]interface{}{
-			"note": "MASRVI uses webhook notifications for status updates",
-		},
-	}, nil
+		Message:       "MASRVI payment status check",
+		LastUpdated:   time.Now(),
+	}
+
+	return status, nil
 }
 
-// HandleNotification handles webhook notifications
-func (p *Provider) HandleNotification(notification *NotificationData) (*rimpay.TransactionStatus, error) {
-	return p.paymentProcessor.HandleNotification(notification)
+// HandleNotification processes MASRVI webhook notifications
+func (p *Provider) HandleNotification(notification *rimpay.MasrviNotificationData) (*rimpay.TransactionStatus, error) {
+	// Convert to internal notification format
+	internalNotification := &NotificationData{
+		Status:      notification.Status,
+		Mobile:      notification.PhoneNumber,
+		PurchaseRef: notification.Reference,
+		PaymentRef:  notification.TransactionID,
+		Timestamp:   notification.Timestamp,
+	}
+	
+	return p.paymentProcessor.HandleNotification(internalNotification)
 }
 
 // ValidateConfig validates provider configuration

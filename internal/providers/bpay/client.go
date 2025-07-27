@@ -6,8 +6,16 @@ import (
 	_ "strings"
 
 	"github.com/CatoSystems/rim-pay/internal/providers/common"
+	"github.com/CatoSystems/rim-pay/internal/types"
 	"github.com/CatoSystems/rim-pay/pkg/rimpay"
 )
+
+// Register the B-PAY provider with the client
+func init() {
+	rimpay.RegisterBPayProvider(func(config rimpay.ProviderConfig, logger rimpay.Logger) (rimpay.PaymentProvider, error) {
+		return NewBPayProvider(config, logger)
+	})
+}
 
 // Provider implements the B-PAY payment provider
 type Provider struct {
@@ -20,8 +28,13 @@ type Provider struct {
 	logger           rimpay.Logger
 }
 
-// NewProvider creates a new B-PAY provider
+// NewProvider creates a new B-PAY provider (deprecated, use NewBPayProvider)
 func NewProvider(config rimpay.ProviderConfig, logger rimpay.Logger) (*Provider, error) {
+	return NewBPayProvider(config, logger)
+}
+
+// NewBPayProvider creates a new B-PAY provider
+func NewBPayProvider(config rimpay.ProviderConfig, logger rimpay.Logger) (*Provider, error) {
 	if err := validateConfig(config); err != nil {
 		return nil, fmt.Errorf("invalid B-PAY configuration: %w", err)
 	}
@@ -66,10 +79,25 @@ func (p *Provider) IsAvailable(ctx context.Context) bool {
 	return err == nil
 }
 
-// ProcessPayment processes a payment with retry logic
-func (p *Provider) ProcessPayment(ctx context.Context, request *rimpay.PaymentRequest) (*rimpay.PaymentResponse, error) {
+// ProcessBPayPayment processes a B-PAY payment using provider-specific request
+func (p *Provider) ProcessBPayPayment(ctx context.Context, request *rimpay.BPayPaymentRequest) (*types.PaymentResponse, error) {
+	if request == nil {
+		return nil, types.NewValidationError("request", "payment request cannot be nil")
+	}
+
+	if err := request.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Convert to generic request for internal processing
+	genericRequest := request.ToGenericRequest()
+	
+	return p.ProcessPayment(ctx, genericRequest)
+}
+
+func (p *Provider) ProcessPayment(ctx context.Context, request *types.PaymentRequest) (*types.PaymentResponse, error) {
 	// Wrap the payment processing in a retryable function
-	retryablePayment := func() (*rimpay.PaymentResponse, error) {
+	retryablePayment := func() (*types.PaymentResponse, error) {
 		return p.paymentProcessor.ProcessPayment(ctx, request)
 	}
 

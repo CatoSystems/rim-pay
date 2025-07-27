@@ -30,6 +30,15 @@ var (
 
 	// ErrTransactionNotFound indicates transaction not found
 	ErrTransactionNotFound = errors.New("transaction not found")
+
+	// Additional errors for client API
+	ErrInvalidConfig     = errors.New("invalid configuration")
+	ErrInvalidRequest    = errors.New("invalid payment request")
+	ErrInvalidProvider   = errors.New("invalid payment provider type")
+	ErrPaymentFailed     = errors.New("payment processing failed")
+	ErrAuthenticationFailed = errors.New("authentication failed")
+	ErrNetworkError      = errors.New("network error")
+	ErrTimeout           = errors.New("request timeout")
 )
 
 // WrapError wraps an error with additional context

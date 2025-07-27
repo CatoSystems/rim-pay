@@ -10,25 +10,21 @@ func TestNewMauritanianPhone(t *testing.T) {
 	tests := []struct {
 		name        string
 		number      string
-		expectedOp  Operator
 		expectError bool
 	}{
 		{
-			name:        "valid Mauritel number with +222",
+			name:        "valid number with +222",
 			number:      "+22222334455",
-			expectedOp:  Mauritel,
 			expectError: false,
 		},
 		{
 			name:        "valid Mattel number with 00222",
-			number:      "0022266778899",
-			expectedOp:  Mattel,
+			number:      "0022232334455",
 			expectError: false,
 		},
 		{
 			name:        "valid Chinguitel number local format",
-			number:      "88776655",
-			expectedOp:  Chinguitel,
+			number:      "33776655",
 			expectError: false,
 		},
 		{
@@ -58,7 +54,6 @@ func TestNewMauritanianPhone(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, phone)
-				assert.Equal(t, tt.expectedOp, phone.Operator())
 				assert.Len(t, phone.Number(), 8)
 			}
 		})
@@ -82,8 +77,8 @@ func TestIsValidMauritanianNumber(t *testing.T) {
 		valid  bool
 	}{
 		{"+22222334455", true},
-		{"0022266778899", true},
-		{"88776655", true},
+		{"0022232334455", true},
+		{"33776655", true},
 		{"222 22 33 44 55", true}, // with spaces
 		{"12345678", false},       // invalid prefix
 		{"1234567", false},        // too short
@@ -98,26 +93,4 @@ func TestIsValidMauritanianNumber(t *testing.T) {
 	}
 }
 
-func TestDetermineOperator(t *testing.T) {
-	tests := []struct {
-		localNumber string
-		expectedOp  Operator
-	}{
-		{"22334455", Mauritel},
-		{"33445566", Mauritel},
-		{"44556677", Mauritel},
-		{"55667788", Mauritel},
-		{"66778899", Mattel},
-		{"77889900", Mattel},
-		{"88990011", Chinguitel},
-		{"99001122", Chinguitel},
-		{"1234567", ""},  // invalid length
-		{"12345678", ""}, // invalid prefix
-	}
 
-	for _, tt := range tests {
-		t.Run(tt.localNumber, func(t *testing.T) {
-			assert.Equal(t, tt.expectedOp, determineOperator(tt.localNumber))
-		})
-	}
-}

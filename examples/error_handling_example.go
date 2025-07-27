@@ -12,8 +12,6 @@ import (
 	"github.com/shopspring/decimal"
 
 	// Import providers
-	_ "github.com/CatoSystems/rim-pay/internal/providers/bpay"
-	_ "github.com/CatoSystems/rim-pay/internal/providers/masrvi"
 )
 
 func main() {
@@ -80,13 +78,12 @@ func demonstrateNetworkErrorRetry(client *rimpay.Client, ctx context.Context) {
 	phone, _ := phone.NewPhone("22334455")
 	amount := money.New(decimal.NewFromFloat(50.00), money.MRU)
 
-	request := &rimpay.PaymentRequest{
+	request := &rimpay.BPayPaymentRequest{
 		Amount:      amount,
 		PhoneNumber: phone,
 		Reference:   fmt.Sprintf("RETRY-TEST-%d", time.Now().Unix()),
-		Language:    rimpay.LanguageFrench,
-		Passcode:    "1234",
 		Description: "Network retry test payment",
+		Passcode:    "1234",
 	}
 
 	fmt.Printf("   Simulating payment with potential network issues...\n")
@@ -94,7 +91,7 @@ func demonstrateNetworkErrorRetry(client *rimpay.Client, ctx context.Context) {
 	fmt.Printf("   Retry configuration: 3 attempts, exponential backoff\n\n")
 
 	start := time.Now()
-	response, err := client.ProcessPayment(ctx, request)
+	response, err := client.ProcessBPayPayment(ctx, request)
 	duration := time.Since(start)
 
 	if err != nil {
@@ -146,18 +143,17 @@ func demonstrateAuthError(client *rimpay.Client, ctx context.Context) {
 	phone, _ := phone.NewPhone("22334455")
 	amount := money.New(decimal.NewFromFloat(25.00), money.MRU)
 
-	request := &rimpay.PaymentRequest{
+	request := &rimpay.BPayPaymentRequest{
 		Amount:      amount,
 		PhoneNumber: phone,
 		Reference:   fmt.Sprintf("AUTH-TEST-%d", time.Now().Unix()),
-		Language:    rimpay.LanguageFrench,
-		Passcode:    "1234",
 		Description: "Authentication error test",
+		Passcode:    "1234",
 	}
 
 	fmt.Printf("   Testing with invalid credentials...\n")
 	
-	_, err = badClient.ProcessPayment(ctx, request)
+	_, err = badClient.ProcessBPayPayment(ctx, request)
 	if err != nil {
 		if paymentErr, ok := err.(*rimpay.PaymentError); ok {
 			fmt.Printf("   ❌ Authentication failed as expected\n")

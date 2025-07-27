@@ -1,318 +1,232 @@
-# RimPay Library Examples
+# RimPay Examples
 
-This directory contains comprehensive examples demonstrating how to use the RimPay payment library for processing payments through Mauritanian payment providers.
+This directory contains comprehensive examples demonstrating how to use the RimPay library for mobile payment processing in Mauritania.
 
-## 📋 Available Examples
+## Available Examples
 
-### 1. 🏦 Basic Usage (`basic_usage.go`)
-**What it demonstrates:**
-- Creating a simple payment client
-- Processing a basic payment
-- Handling payment responses
-- Error handling basics
+### 1. Provider-Specific API Examples (`provider_specific_example.go`)
+**NEW**: Demonstrates the improved type-safe API with provider-specific request types.
 
-**Key concepts:**
-```go
-// Create client with configuration
-client, err := rimpay.NewClient(config)
+- **B-PAY Specific Payments**: Using `BPayPaymentRequest` with provider-specific fields like `Passcode`
+- **MASRVI Specific Payments**: Using `MasrviPaymentRequest` with `CallbackURL` and `ReturnURL`
+- **Type Safety**: Compile-time safety preventing mismatched provider requests
+- **Multi-Provider Support**: Managing multiple providers with type safety
 
-// Process payment
-response, err := client.ProcessPayment(ctx, request)
-```
+**Key Features:**
+- Provider-specific request types (`BPayPaymentRequest`, `MasrviPaymentRequest`)
+- Type-safe API preventing provider mismatches
+- Improved developer experience with IntelliSense support
+- Provider-specific validation and error handling
 
-**Run:** `go run examples/basic_usage.go`
+### 2. Basic Usage (`basic_usage.go`)
+Simple introduction to the RimPay library with basic payment processing.
 
----
-
-### 2. 💳 B-PAY Provider (`bpay_example.go`)
-**What it demonstrates:**
-- B-PAY specific configuration
-- OAuth 2.0 authentication flow
-- Payment processing for all Mauritanian operators (Mauritel, Mattel, Chinguitel)
-- Transaction status checking
-- Provider availability checking
-
-**Key features:**
-- Automatic token management
-- Retry on authentication failures
-- Operator-specific payment handling
-
-**Run:** `go run examples/bpay_example.go`
-
----
-
-### 3. 🌐 MASRVI Provider (`masrvi_example.go`)
-**What it demonstrates:**
-- MASRVI specific configuration
-- Session management (5-minute validity)
-- E-commerce payment form generation
-- Webhook notification handling
-- HTTP server for receiving notifications
-
-**Key features:**
-- Session-based authentication
-- Payment form creation
-- Real-time webhook processing
-- Multiple redirect URLs
-
-**Run:** `go run examples/masrvi_example.go`
-
----
-
-### 4. 🔄 Multi-Provider (`multi_provider_example.go`)
-**What it demonstrates:**
-- Configuration with multiple providers
-- Provider-specific payment routing
-- Provider failover strategies
-- Bulk payment processing
-- Dynamic provider switching
-
-**Key features:**
-- Default and fallback providers
-- Provider-specific request formatting
-- Bulk payment orchestration
-
-**Run:** `go run examples/multi_provider_example.go`
-
----
-
-### 5. ⚠️ Error Handling (`error_handling_example.go`)
-**What it demonstrates:**
-- Network error handling with automatic retry
-- Authentication error scenarios
-- Validation error handling
-- Business logic errors (insufficient funds, wrong PIN)
-- Context timeout handling
-
-**Key features:**
-- Exponential backoff retry
-- Error classification (retryable vs non-retryable)
-- Timeout management
-- Detailed error analysis
-
-**Run:** `go run examples/error_handling_example.go`
-
----
-
-### 6. ⚙️ Configuration (`configuration_example.go`)
-**What it demonstrates:**
-- Basic, production, and development configurations
-- Environment-specific settings
-- HTTP client tuning for performance
-- Security configuration options
-- Configuration validation
-
-**Key features:**
-- Environment-aware settings
-- Performance optimization
-- Security best practices
-- Configuration validation
-
-**Run:** `go run examples/configuration_example.go`
-
----
-
-### 7. 🔄 Retry Mechanism (`retry_demo.go`)
-**What it demonstrates:**
-- Automatic retry functionality
-- Exponential backoff with jitter
-- Retry configuration options
-- Retryable vs non-retryable errors
-
-**Key features:**
-- Smart retry logic
-- Configurable retry policies
-- Context cancellation support
-
-**Run:** `go run examples/retry_demo.go`
-
----
-
-## 🚀 Quick Start
-
-1. **Install dependencies:**
-   ```bash
-   go mod tidy
-   ```
-
-2. **Update credentials:**
-   Edit the example files and replace the placeholder credentials with your actual provider credentials:
-   ```go
-   Credentials: map[string]string{
-       "username":  "your_actual_username",
-       "password":  "your_actual_password", 
-       "client_id": "your_actual_client_id",
-   }
-   ```
-
-3. **Run an example:**
-   ```bash
-   go run examples/basic_usage.go
-   ```
-
-## 📖 Common Patterns
-
-### Creating a Payment Request
-```go
-// Create phone number
-phone, err := phone.NewPhone("22334455")
-if err != nil {
-    log.Fatal(err)
-}
-
-// Create amount
-amount := money.New(decimal.NewFromFloat(100.00), money.MRU)
-
-// Create request
-request := &rimpay.PaymentRequest{
-    Amount:      amount,
-    PhoneNumber: phone,
-    Reference:   "ORDER-123",
-    Language:    rimpay.LanguageFrench,
-    Passcode:    "1234", // For B-PAY
-    Description: "Payment description",
-}
-```
-
-### Error Handling
-```go
-response, err := client.ProcessPayment(ctx, request)
-if err != nil {
-    if paymentErr, ok := err.(*rimpay.PaymentError); ok {
-        switch paymentErr.Code {
-        case rimpay.ErrorCodeInsufficientFunds:
-            // Handle insufficient funds
-        case rimpay.ErrorCodeNetworkError:
-            // Network error - will be retried automatically
-        case rimpay.ErrorCodeAuthenticationFailed:
-            // Check credentials
-        }
-    }
-    return
-}
-```
-
-### Provider Configuration
-```go
-config := &rimpay.Config{
-    Environment:     rimpay.EnvironmentSandbox,
-    DefaultProvider: "bpay",
-    Providers: map[string]rimpay.ProviderConfig{
-        "bpay": {
-            Enabled: true,
-            BaseURL: "https://ebankily-tst.appspot.com",
-            Timeout: 30 * time.Second,
-            Credentials: map[string]string{
-                "username":  "your_username",
-                "password":  "your_password",
-                "client_id": "your_client_id",
-            },
-        },
-    },
-}
-```
-
-## 🔧 Testing
-
-All examples can be run individually. For testing without real provider credentials:
-
-1. **Use sandbox URLs** (already configured in examples)
-2. **Mock responses** by replacing HTTP clients
-3. **Test error scenarios** by using invalid credentials
-
-## 📞 Mauritanian Phone Numbers
-
-The library supports all Mauritanian operators:
-
-| Operator | Prefixes | Example |
-|----------|----------|---------|
-| Mauritel | 2, 3, 4, 5 | 22334455 |
-| Mattel   | 6, 7     | 66778899 |
-| Chinguitel | 8, 9   | 88990011 |
-
-Phone numbers can be provided in various formats:
-- International: `+22222334455`
-- With country code: `0022222334455`
-- Local: `22334455`
-
-## 💰 Money Handling
-
-The library uses decimal precision for accurate money calculations:
-
-```go
-// Create from float
-amount := money.FromFloat64(100.50, money.MRU)
-
-// Create from string
-amount, err := money.FromString("100.50", money.MRU)
-
-// Create from cents
-amount := money.FromCents(10050, money.MRU) // 100.50 MRU
-```
-
-## 🔐 Security Best Practices
-
-1. **Never hardcode credentials** in production code
-2. **Use environment variables** for sensitive data
-3. **Enable TLS** in production
-4. **Use request signing** when available
-5. **Validate webhook signatures** for MASRVI notifications
-
-## 🌍 Environment Configuration
-
-| Environment | Use Case | Base URLs |
-|-------------|----------|-----------|
-| Sandbox | Development/Testing | Test provider URLs |
-| Production | Live transactions | Production provider URLs |
-
-## 📚 Additional Resources
-
-- **API Documentation:** See PDF specifications in project root
-- **Provider APIs:** B-PAY and MASRVI official documentation
-- **Go Documentation:** `go doc` command for package details
-- **Test Files:** `*_test.go` files for usage patterns
-
-## 🆘 Troubleshooting
-
-### Common Issues
-
-1. **Authentication Failed**
-   - Check credentials in provider configuration
-   - Verify provider URLs are correct
-   - Ensure credentials match environment (sandbox vs production)
-
-2. **Network Errors**
-   - Check internet connectivity
-   - Verify provider service status
-   - Increase timeout if needed
-
-3. **Validation Errors**
-   - Verify phone number format
-   - Check amount is positive and not zero
-   - Ensure reference is provided and valid
-
-4. **Provider Not Available**
-   - Check provider service status
-   - Verify base URL is accessible
-   - Test with simple HTTP request
-
-### Getting Help
-
-- Review error messages carefully
-- Check provider-specific error codes
-- Use debug logging for detailed information
-- Test with minimal examples first
-
----
-
-## 📝 Example Output
-
-When you run the examples, you'll see detailed output showing:
-- Configuration validation
-- Payment processing steps
-- Provider responses
+- Client initialization
+- Provider configuration
+- Simple payment processing
 - Error handling
-- Retry attempts
-- Success/failure notifications
 
-This helps you understand exactly how the library works and how to integrate it into your applications.
+### 3. B-PAY Provider Example (`bpay_example.go`)
+Comprehensive B-PAY implementation with OAuth 2.0 authentication.
+
+- OAuth 2.0 authentication flow
+- Provider availability checking
+- Operator-specific payments (Mauritel, Mattel, Chinguitel)
+- Payment status checking
+- Error handling with retries
+
+### 4. MASRVI Provider Example (`masrvi_example.go`)
+MASRVI implementation with webhook server and session management.
+
+- Session-based authentication
+- Webhook notification server
+- Payment form creation
+- Notification handling and processing
+- HTTP server setup for webhook endpoints
+
+### 5. Error Handling (`error_handling_example.go`)
+Comprehensive error handling patterns and recovery strategies.
+
+- Different error types (network, authentication, validation)
+- Error recovery strategies
+- Logging and monitoring
+- Custom error handling logic
+
+### 6. Configuration Examples (`configuration_example.go`)
+Various configuration patterns and best practices.
+
+- Environment-based configuration
+- Multiple provider setup
+- Timeout and retry configuration
+- Logging configuration
+- Security best practices
+
+### 7. Multi-Provider Support (`multi_provider_example.go`)
+Managing multiple payment providers with fallback strategies.
+
+- Multiple provider registration
+- Intelligent provider selection
+- Fallback mechanisms
+- Load balancing strategies
+- Provider health monitoring
+
+### 8. Retry Mechanisms (`retry_demo.go`)
+Advanced retry patterns for handling transient failures.
+
+- Exponential backoff strategies
+- Custom retry conditions
+- Circuit breaker patterns
+- Retry metrics and monitoring
+- Timeout handling
+
+## Running the Examples
+
+### Prerequisites
+```bash
+# Install dependencies
+go mod tidy
+
+# Set environment variables (if needed)
+export BPAY_CLIENT_ID="your_client_id"
+export BPAY_CLIENT_SECRET="your_client_secret"
+export MASRVI_MERCHANT_ID="your_merchant_id"
+```
+
+### Running Individual Examples
+
+```bash
+# Provider-specific API (recommended starting point)
+go run examples/provider_specific_example.go
+
+# Basic usage
+go run examples/basic_usage.go
+
+# B-PAY specific example
+go run examples/bpay_example.go
+
+# MASRVI with webhook server
+go run examples/masrvi_example.go
+
+# Error handling patterns
+go run examples/error_handling_example.go
+
+# Configuration examples
+go run examples/configuration_example.go
+
+# Multi-provider setup
+go run examples/multi_provider_example.go
+
+# Retry mechanisms
+go run examples/retry_demo.go
+```
+
+### Running All Examples
+```bash
+# Build and run all examples
+make examples
+
+# Or manually
+for example in examples/*.go; do
+    echo "Running $example..."
+    go run "$example"
+    echo "---"
+done
+```
+
+## Example Output
+
+When running the provider-specific example, you'll see output like:
+
+```
+=== RimPay Provider-Specific API Examples ===
+
+--- B-PAY Specific Payment Example ---
+B-PAY Payment Response:
+  Transaction ID: bpay_tx_1234567890
+  Status: pending
+  Reference: BPAY-TEST-001
+  Provider: bpay
+
+--- MASRVI Specific Payment Example ---
+MASRVI Payment Response:
+  Transaction ID: masrvi_tx_0987654321
+  Status: pending
+  Reference: MASRVI-TEST-001
+  Provider: masrvi
+  Payment URL: https://pay.masrvi.mr/payment/xyz
+
+--- Multi-Provider Type-Safe Example ---
+Multi-Provider B-PAY Result: bpay_tx_1111111111 (Status: pending)
+Multi-Provider MASRVI Result: masrvi_tx_2222222222 (Status: pending)
+✅ Multi-provider payments completed with type safety!
+```
+
+## Key Concepts
+
+### Provider-Specific Types (NEW)
+The library now provides type-safe, provider-specific request types:
+
+```go
+// B-PAY specific request
+bpayRequest := &bpay.BPayPaymentRequest{
+    PhoneNumber: phone.MauritanianPhone{Number: "22123456"},
+    Amount:      money.NewMRU(1000),
+    Passcode:    "1234",      // B-PAY specific
+    // ... other fields
+}
+
+// MASRVI specific request  
+masrviRequest := &masrvi.MasrviPaymentRequest{
+    PhoneNumber: phone.MauritanianPhone{Number: "33987654"},
+    Amount:      money.NewMRU(500),
+    CallbackURL: "https://myapp.com/webhook", // MASRVI specific
+    ReturnURL:   "https://myapp.com/return",  // MASRVI specific
+    // ... other fields
+}
+```
+
+### Type Safety Benefits
+- **Compile-time Error Prevention**: Cannot mix provider request types
+- **IntelliSense Support**: Better IDE support with provider-specific fields
+- **Validation**: Provider-specific validation rules
+- **Documentation**: Clear API contracts for each provider
+
+### Migration from Generic API
+The generic `PaymentRequest` is still supported but deprecated:
+
+```go
+// Old way (still works, but deprecated)
+request := &rimpay.PaymentRequest{...}
+response, err := client.ProcessPayment(ctx, request)
+
+// New way (recommended)
+bpayRequest := &bpay.BPayPaymentRequest{...}
+response, err := client.ProcessBPayPayment(ctx, bpayRequest)
+```
+
+## Best Practices
+
+1. **Use Provider-Specific Types**: Always use the new provider-specific request types for better type safety
+2. **Error Handling**: Always handle errors appropriately with retry logic
+3. **Validation**: Validate requests before processing
+4. **Logging**: Implement proper logging for debugging and monitoring
+5. **Configuration**: Use environment variables for sensitive configuration
+6. **Testing**: Test with mock providers before production deployment
+7. **Webhooks**: For MASRVI, always implement webhook handlers for status updates
+
+## Testing
+
+All examples are designed to work with mock/test configurations. For production use:
+
+1. Replace test credentials with real ones
+2. Update base URLs to production endpoints
+3. Implement proper error handling
+4. Set up monitoring and logging
+5. Configure webhook endpoints (for MASRVI)
+
+## Support
+
+For questions or issues with the examples:
+1. Check the main README.md in the project root
+2. Review the internal documentation
+3. Examine the test files for additional usage patterns

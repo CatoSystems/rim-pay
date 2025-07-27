@@ -12,8 +12,6 @@ import (
 	"github.com/shopspring/decimal"
 	
 	// Import providers to register them
-	_ "github.com/CatoSystems/rim-pay/internal/providers/bpay"
-	_ "github.com/CatoSystems/rim-pay/internal/providers/masrvi"
 )
 
 func main() {
@@ -51,11 +49,11 @@ func main() {
 	amount := money.New(decimal.NewFromFloat(100.00), money.MRU)
 
 	// Create payment request
-	request := &rimpay.PaymentRequest{
+	request := &rimpay.BPayPaymentRequest{
 		Amount:      amount,
 		PhoneNumber: phoneNumber,
 		Reference:   "TEST-" + fmt.Sprintf("%d", time.Now().Unix()),
-		Language:    rimpay.LanguageFrench,
+		Description: "Retry demo payment",
 		Passcode:    "1234",
 	}
 
@@ -69,7 +67,7 @@ func main() {
 
 	// Process payment - this will use the retry functionality
 	// If the first attempt fails with a retryable error, it will automatically retry
-	resp, err := client.ProcessPayment(ctx, request)
+	resp, err := client.ProcessBPayPayment(ctx, request)
 	if err != nil {
 		// Even if this fails, the retry mechanism would have attempted up to 3 times
 		// for retryable errors before giving up
