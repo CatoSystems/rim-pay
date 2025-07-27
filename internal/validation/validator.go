@@ -12,6 +12,8 @@ type Validator struct {
 	urlRegex   *regexp.Regexp
 }
 
+const errInvalidURLFormat = "invalid URL format"
+
 // NewValidator creates a new validator
 func NewValidator() *Validator {
 	return &Validator{
@@ -40,23 +42,22 @@ func (v *Validator) ValidatePaymentRequest(request *types.PaymentRequest) error 
 	if err := v.validateReference(request.Reference); err != nil {
 		return err
 	}
-
-	// Validate URLs if provided
 	if request.SuccessURL != "" && !v.isValidURL(request.SuccessURL) {
-		return types.NewValidationError("success_url", "invalid URL format")
+		return types.NewValidationError("success_url", errInvalidURLFormat)
 	}
 
 	if request.FailureURL != "" && !v.isValidURL(request.FailureURL) {
-		return types.NewValidationError("failure_url", "invalid URL format")
+		return types.NewValidationError("failure_url", errInvalidURLFormat)
 	}
 
 	if request.CancelURL != "" && !v.isValidURL(request.CancelURL) {
-		return types.NewValidationError("cancel_url", "invalid URL format")
+		return types.NewValidationError("cancel_url", errInvalidURLFormat)
 	}
 
 	if request.CallbackURL != "" && !v.isValidURL(request.CallbackURL) {
-		return types.NewValidationError("callback_url", "invalid URL format")
+		return types.NewValidationError("callback_url", errInvalidURLFormat)
 	}
+	
 
 	// Validate description length
 	if len(request.Description) > 255 {
