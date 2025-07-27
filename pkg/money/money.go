@@ -9,8 +9,7 @@ import (
 type Currency string
 
 const (
-	MRU Currency = "MRU" // Mauritanian Ouguiya
-	MRO Currency = "MRO" // Old Ouguiya (deprecated)
+	MRU Currency = "MRU" // Mauritanian Ouguiya (current, since Jan 1, 2018)
 )
 
 type Money struct {
@@ -71,14 +70,7 @@ func (m Money) ToProviderAmount(inCents bool) string {
 }
 
 func (m Money) GetCurrencyCode() string {
-	switch m.currency {
-	case MRU:
-		return "929"
-	case MRO:
-		return "478"
-	default:
-		return "929"
-	}
+	return "929" // MRU currency code (ISO 4217)
 }
 
 func (m Money) Validate() error {

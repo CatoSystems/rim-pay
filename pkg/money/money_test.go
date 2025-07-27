@@ -52,9 +52,6 @@ func TestToProviderAmount(t *testing.T) {
 func TestGetCurrencyCode(t *testing.T) {
 	mruMoney := FromFloat64(10, MRU)
 	assert.Equal(t, "929", mruMoney.GetCurrencyCode())
-
-	mroMoney := FromFloat64(10, MRO)
-	assert.Equal(t, "478", mroMoney.GetCurrencyCode())
 }
 
 func TestValidate(t *testing.T) {
@@ -107,8 +104,10 @@ func TestAdd(t *testing.T) {
 }
 
 func TestAddDifferentCurrencies(t *testing.T) {
+	// Since we only have MRU now, this test doesn't make sense anymore
+	// We can create a test with an invalid currency instead
 	money1 := FromFloat64(10.50, MRU)
-	money2 := FromFloat64(5.25, MRO)
+	money2 := Money{amount: decimal.NewFromFloat(5.25), currency: "USD"}
 
 	_, err := money1.Add(money2)
 	assert.Error(t, err)

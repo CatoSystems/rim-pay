@@ -28,7 +28,9 @@ currency and provides convenient methods for money operations.
 # Currency Support
 
 Currently supports:
-	- MRU: Mauritanian Ouguiya (1 MRU = 100 cents)
+	- MRU: Mauritanian Ouguiya (current since January 1, 2018; 1 MRU = 100 cents)
+
+Note: The old MRO currency was replaced by MRU on January 1, 2018, at a rate of 10 MRO = 1 MRU.
 
 # Precision
 
