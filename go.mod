@@ -1,6 +1,6 @@
 module github.com/CatoSystems/rim-pay
 
-go 1.21
+go 1.19
 
 require (
 	github.com/shopspring/decimal v1.4.0
