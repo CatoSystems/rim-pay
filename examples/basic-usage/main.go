@@ -14,27 +14,24 @@ import (
 
 func main() {
 	fmt.Println("🏦 RimPay Library - Basic Usage Example")
-	fmt.Println("=====================================\n")
-
+	fmt.Println("=====================================")
 	// Step 1: Create configuration
 	config := createConfig()
-
 	// Step 2: Initialize client
 	client, err := rimpay.NewClient(config)
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
 	}
-
 	// Step 3: Create provider-specific payment request
 	ctx := context.Background()
 	var response *rimpay.PaymentResponse
-	
+
 	if config.DefaultProvider == "bpay" {
 		request, err := createBPayPaymentRequest()
 		if err != nil {
 			log.Fatalf("Failed to create B-PAY payment request: %v", err)
 		}
-		
+
 		// Step 4: Process B-PAY payment
 		fmt.Printf("📱 Processing B-PAY payment...\n")
 		fmt.Printf("   Amount: %s\n", request.Amount.String())
@@ -48,7 +45,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Failed to create MASRVI payment request: %v", err)
 		}
-		
+
 		// Step 4: Process MASRVI payment
 		fmt.Printf("📱 Processing MASRVI payment...\n")
 		fmt.Printf("   Amount: %s\n", request.Amount.String())
@@ -60,7 +57,7 @@ func main() {
 	} else {
 		log.Fatalf("Unsupported provider: %s", config.DefaultProvider)
 	}
-	
+
 	if err != nil {
 		handlePaymentError(err)
 		return
@@ -171,13 +168,13 @@ func createMasrviPaymentRequest() (*rimpay.MasrviPaymentRequest, error) {
 
 func handlePaymentError(err error) {
 	fmt.Printf("❌ Payment failed: %v\n", err)
-	
+
 	// Check if it's a payment error for more details
 	if paymentErr, ok := err.(*rimpay.PaymentError); ok {
 		fmt.Printf("   Error Code: %s\n", paymentErr.Code)
 		fmt.Printf("   Provider: %s\n", paymentErr.Provider)
 		fmt.Printf("   Retryable: %v\n", paymentErr.IsRetryable())
-		
+
 		// Suggest actions based on error type
 		switch paymentErr.Code {
 		case rimpay.ErrorCodeAuthenticationFailed:

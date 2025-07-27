@@ -10,13 +10,12 @@ import (
 	"github.com/CatoSystems/rim-pay/pkg/phone"
 	"github.com/CatoSystems/rim-pay/pkg/rimpay"
 	"github.com/shopspring/decimal"
-
 	// Import providers
 )
 
 func main() {
 	fmt.Println("🏦 RimPay Library - Error Handling & Retry Example")
-	fmt.Println("=================================================\n")
+	fmt.Println("=================================================")
 
 	config := createTestConfig()
 	client, err := rimpay.NewClient(config)
@@ -97,13 +96,13 @@ func demonstrateNetworkErrorRetry(client *rimpay.Client, ctx context.Context) {
 	if err != nil {
 		fmt.Printf("   ❌ Payment failed after retries: %v\n", err)
 		fmt.Printf("   Duration: %v\n", duration)
-		
+
 		if paymentErr, ok := err.(*rimpay.PaymentError); ok {
 			fmt.Printf("   Error details:\n")
 			fmt.Printf("     Code: %s\n", paymentErr.Code)
 			fmt.Printf("     Provider: %s\n", paymentErr.Provider)
 			fmt.Printf("     Retryable: %v\n", paymentErr.IsRetryable())
-			
+
 			if paymentErr.IsRetryable() {
 				fmt.Printf("   💡 This error was retried automatically\n")
 				fmt.Printf("   💡 The library attempted up to 3 times with exponential backoff\n")
@@ -152,14 +151,14 @@ func demonstrateAuthError(client *rimpay.Client, ctx context.Context) {
 	}
 
 	fmt.Printf("   Testing with invalid credentials...\n")
-	
+
 	_, err = badClient.ProcessBPayPayment(ctx, request)
 	if err != nil {
 		if paymentErr, ok := err.(*rimpay.PaymentError); ok {
 			fmt.Printf("   ❌ Authentication failed as expected\n")
 			fmt.Printf("   Error code: %s\n", paymentErr.Code)
 			fmt.Printf("   Retryable: %v\n", paymentErr.IsRetryable())
-			
+
 			if paymentErr.Code == rimpay.ErrorCodeAuthenticationFailed {
 				fmt.Printf("   💡 This is an authentication error\n")
 				fmt.Printf("   💡 Check your provider credentials\n")
@@ -284,7 +283,7 @@ func demonstrateBusinessErrors(client *rimpay.Client, ctx context.Context) {
 	if err != nil {
 		if paymentErr, ok := err.(*rimpay.PaymentError); ok {
 			fmt.Printf("   ❌ Business error: %s\n", paymentErr.Message)
-			
+
 			switch paymentErr.Code {
 			case rimpay.ErrorCodeInsufficientFunds:
 				fmt.Printf("   💡 Customer needs to add funds to their mobile money account\n")
@@ -295,7 +294,7 @@ func demonstrateBusinessErrors(client *rimpay.Client, ctx context.Context) {
 			default:
 				fmt.Printf("   💡 Check error code %s for specific handling\n", paymentErr.Code)
 			}
-			
+
 			fmt.Printf("   Retryable: %v\n", paymentErr.IsRetryable())
 		}
 	}
@@ -319,7 +318,7 @@ func demonstrateTimeoutHandling(client *rimpay.Client, ctx context.Context) {
 	}
 
 	fmt.Printf("   Testing with 1-second timeout...\n")
-	
+
 	start := time.Now()
 	_, err := client.ProcessPayment(shortCtx, request)
 	duration := time.Since(start)
@@ -327,7 +326,7 @@ func demonstrateTimeoutHandling(client *rimpay.Client, ctx context.Context) {
 	if err != nil {
 		fmt.Printf("   ❌ Payment failed due to timeout: %v\n", err)
 		fmt.Printf("   Duration: %v\n", duration)
-		
+
 		if err == context.DeadlineExceeded {
 			fmt.Printf("   💡 This was a context timeout\n")
 			fmt.Printf("   💡 Consider increasing timeout for production\n")

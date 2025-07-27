@@ -79,87 +79,181 @@ Advanced retry patterns for handling transient failures.
 - Retry metrics and monitoring
 - Timeout handling
 
-## Running the Examples
+## RimPay Examples
 
-### Prerequisites
-```bash
-# Install dependencies
-go mod tidy
+This directory contains comprehensive examples demonstrating how to use the RimPay library for payment processing in Mauritania.
 
-# Set environment variables (if needed)
-export BPAY_CLIENT_ID="your_client_id"
-export BPAY_CLIENT_SECRET="your_client_secret"
-export MASRVI_MERCHANT_ID="your_merchant_id"
+## Structure
+
+Each example is now organized in its own package to avoid conflicts and make them easier to run independently:
+
+```
+examples/
+├── README.md                     # This file
+├── basic-usage/                  # Basic usage patterns
+│   └── main.go
+├── bpay/                         # B-PAY specific examples
+│   └── main.go
+├── masrvi/                       # MASRVI specific examples
+│   └── main.go
+├── multi-provider/               # Using multiple providers
+│   └── main.go
+├── error-handling/               # Error handling and retry
+│   └── main.go
+├── configuration/                # Configuration examples
+│   └── main.go
+└── [legacy files...]            # Old single-file examples
 ```
 
-### Running Individual Examples
+## Running Examples
+
+Each example can be run independently using Go:
 
 ```bash
-# Provider-specific API (recommended starting point)
-go run examples/provider_specific_example.go
-
-# Basic usage
-go run examples/basic_usage.go
+# Basic usage example
+cd examples/basic-usage && go run main.go
 
 # B-PAY specific example
-go run examples/bpay_example.go
+cd examples/bpay && go run main.go
 
-# MASRVI with webhook server
-go run examples/masrvi_example.go
+# MASRVI specific example
+cd examples/masrvi && go run main.go
 
-# Error handling patterns
-go run examples/error_handling_example.go
+# Multi-provider example
+cd examples/multi-provider && go run main.go
 
-# Configuration examples
-go run examples/configuration_example.go
+# Error handling example
+cd examples/error-handling && go run main.go
 
-# Multi-provider setup
-go run examples/multi_provider_example.go
-
-# Retry mechanisms
-go run examples/retry_demo.go
+# Configuration example
+cd examples/configuration && go run main.go
 ```
 
-### Running All Examples
-```bash
-# Build and run all examples
-make examples
+## Example Descriptions
 
-# Or manually
-for example in examples/*.go; do
-    echo "Running $example..."
-    go run "$example"
-    echo "---"
-done
+### 1. Basic Usage (`basic-usage/`)
+- Shows fundamental payment processing
+- Demonstrates both B-PAY and MASRVI workflows
+- Basic error handling
+- Configuration setup
+
+### 2. B-PAY Examples (`bpay/`)
+- B-PAY specific authentication (OAuth 2.0)
+- Payment processing for all Mauritanian operators
+- Transaction status checking
+- B-PAY specific error handling
+
+### 3. MASRVI Examples (`masrvi/`)
+- MASRVI session management
+- Payment form generation
+- Webhook notification handling
+- E-commerce integration patterns
+
+### 4. Multi-Provider (`multi-provider/`)
+- Using multiple providers in one application
+- Dynamic provider selection logic
+- Type-safe provider-specific requests
+- Unified error handling across providers
+
+### 5. Error Handling (`error-handling/`)
+- Comprehensive error handling patterns
+- Automatic retry mechanisms
+- Error classification and recovery
+- Context timeout handling
+
+### 6. Configuration (`configuration/`)
+- Default vs custom configurations
+- Environment-specific settings
+- Timeout and connection management
+- Logging configuration
+
+## Prerequisites
+
+Before running any examples, ensure you have:
+
+1. **Go 1.19+** installed
+2. **RimPay library** installed:
+   ```bash
+   go mod init your-project
+   go get github.com/CatoSystems/rim-pay
+   ```
+3. **Provider credentials** (for actual payments):
+   - B-PAY: username, password, client_id
+   - MASRVI: merchant_id
+
+## Configuration
+
+Update the credentials in each example file before running:
+
+```go
+// B-PAY Configuration
+"bpay": {
+    Enabled: true,
+    BaseURL: "https://ebankily-tst.appspot.com", // Sandbox
+    Credentials: map[string]string{
+        "username":  "your_bpay_username",
+        "password":  "your_bpay_password", 
+        "client_id": "your_bpay_client_id",
+    },
+},
+
+// MASRVI Configuration
+"masrvi": {
+    Enabled: true,
+    BaseURL: "https://masrviapp.mr/online", // Production
+    Credentials: map[string]string{
+        "merchant_id": "your_masrvi_merchant_id",
+    },
+},
 ```
 
-## Example Output
+## Phone Number Format
 
-When running the provider-specific example, you'll see output like:
+All examples use valid Mauritanian phone numbers with prefixes 2, 3, or 4:
+- `22334455` - Mauritel
+- `33445566` - Chinguitel
+- `44556677` - Mattel
 
+## Testing
+
+The examples are configured to work with sandbox/test environments. For production use:
+
+1. Update the `BaseURL` in provider configurations
+2. Use production credentials
+3. Set `Environment: rimpay.EnvironmentProduction`
+
+## Troubleshooting
+
+### Common Issues
+
+1. **"Provider not available"** - Check credentials and network connectivity
+2. **"Invalid phone number"** - Ensure phone numbers use valid Mauritanian prefixes (2, 3, 4)
+3. **"Payment failed"** - Check provider-specific error messages and logs
+
+### Debug Mode
+
+Enable debug logging by setting:
+```go
+config.Logging.Level = "debug"
 ```
-=== RimPay Provider-Specific API Examples ===
 
---- B-PAY Specific Payment Example ---
-B-PAY Payment Response:
-  Transaction ID: bpay_tx_1234567890
-  Status: pending
-  Reference: BPAY-TEST-001
-  Provider: bpay
+This will show detailed HTTP requests/responses and authentication flows.
 
---- MASRVI Specific Payment Example ---
-MASRVI Payment Response:
-  Transaction ID: masrvi_tx_0987654321
-  Status: pending
-  Reference: MASRVI-TEST-001
-  Provider: masrvi
-  Payment URL: https://pay.masrvi.mr/payment/xyz
+## Contributing
 
---- Multi-Provider Type-Safe Example ---
-Multi-Provider B-PAY Result: bpay_tx_1111111111 (Status: pending)
-Multi-Provider MASRVI Result: masrvi_tx_2222222222 (Status: pending)
-✅ Multi-provider payments completed with type safety!
-```
+When adding new examples:
+
+1. Create a new directory under `examples/`
+2. Add a `main.go` file with a focused example
+3. Update this README with the new example description
+4. Test the example thoroughly
+
+## Support
+
+For questions about these examples:
+1. Check the main [README.md](../README.md)
+2. Review the [API documentation](../pkg/rimpay/)
+3. Create an issue on GitHub
 
 ## Key Concepts
 

@@ -11,15 +11,12 @@ import (
 	"github.com/CatoSystems/rim-pay/pkg/phone"
 	"github.com/CatoSystems/rim-pay/pkg/rimpay"
 	"github.com/shopspring/decimal"
-
-	// Import providers
 )
 
 func main() {
 	fmt.Println("🏦 RimPay Library - MASRVI Provider Example")
-	fmt.Println("==========================================\n")
+	fmt.Println("==========================================")
 
-	// Create MASRVI specific configuration
 	config := &rimpay.Config{
 		Environment:     rimpay.EnvironmentSandbox,
 		DefaultProvider: "masrvi",

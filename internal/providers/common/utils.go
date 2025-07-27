@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math/rand"
+	"crypto/rand"
 	"regexp"
 	"strconv"
 	"strings"

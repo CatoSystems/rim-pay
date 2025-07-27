@@ -1,2 +1,0 @@
-# Examples are meant to be run individually, not as part of go test
-# They contain multiple main functions which conflict during testing

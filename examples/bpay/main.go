@@ -10,13 +10,11 @@ import (
 	"github.com/CatoSystems/rim-pay/pkg/phone"
 	"github.com/CatoSystems/rim-pay/pkg/rimpay"
 	"github.com/shopspring/decimal"
-
-	// Import providers
 )
 
 func main() {
 	fmt.Println("🏦 RimPay Library - B-PAY Provider Example")
-	fmt.Println("=========================================\n")
+	fmt.Println("=========================================")
 
 	// Create B-PAY specific configuration
 	config := &rimpay.Config{
@@ -28,9 +26,9 @@ func main() {
 				BaseURL: "https://ebankily-tst.appspot.com",
 				Timeout: 30 * time.Second,
 				Credentials: map[string]string{
-					"username":  "test_merchant",      // Your B-PAY username
-					"password":  "test_password",      // Your B-PAY password
-					"client_id": "test_client_12345",  // Your B-PAY client ID
+					"username":  "test_merchant",     // Your B-PAY username
+					"password":  "test_password",     // Your B-PAY password
+					"client_id": "test_client_12345", // Your B-PAY client ID
 				},
 			},
 		},
@@ -45,18 +43,18 @@ func main() {
 	fmt.Println("The library handles OAuth 2.0 authentication automatically:")
 	fmt.Println("1. Requests access token using username/password/client_id")
 	fmt.Println("2. Automatically refreshes tokens when they expire")
-	fmt.Println("3. Handles token errors gracefully with retry\n")
+	fmt.Println("3. Handles token errors gracefully with retry")
 
 	// Check if B-PAY provider is available
 	ctx := context.Background()
 	fmt.Printf("🔍 Checking B-PAY availability...\n")
-	
+
 	// This will attempt to authenticate and return true if successful
 	if isAvailable := checkProviderAvailability(client, ctx); !isAvailable {
 		fmt.Printf("❌ B-PAY provider is not available (check credentials)\n")
 		return
 	}
-	
+
 	fmt.Printf("✅ B-PAY provider is available\n\n")
 
 	// Example 1: Mauritel payment
@@ -86,7 +84,7 @@ func checkProviderAvailability(client *rimpay.Client, ctx context.Context) bool 
 	// Try to create a small test request to check authentication
 	testPhone, _ := phone.NewPhone("22334455")
 	testAmount := money.New(decimal.NewFromFloat(1.00), money.MRU)
-	
+
 	testRequest := &rimpay.BPayPaymentRequest{
 		Amount:      testAmount,
 		PhoneNumber: testPhone,
@@ -124,8 +122,8 @@ func createBPayPayment(phoneNumber string, amount float64, description string) *
 }
 
 func processBPayPayment(client *rimpay.Client, ctx context.Context, request *rimpay.BPayPaymentRequest) {
-	fmt.Printf("   Processing: %s → %s\n", 
-		request.PhoneNumber.ForProvider(true), 
+	fmt.Printf("   Processing: %s → %s\n",
+		request.PhoneNumber.ForProvider(true),
 		request.Amount.String())
 	fmt.Printf("   Reference: %s\n", request.Reference)
 
@@ -133,7 +131,7 @@ func processBPayPayment(client *rimpay.Client, ctx context.Context, request *rim
 	response, err := client.ProcessBPayPayment(ctx, request)
 	if err != nil {
 		fmt.Printf("   ❌ Payment failed: %v\n", err)
-		
+
 		if paymentErr, ok := err.(*rimpay.PaymentError); ok {
 			switch paymentErr.Code {
 			case rimpay.ErrorCodeInsufficientFunds:
@@ -158,7 +156,7 @@ func processBPayPayment(client *rimpay.Client, ctx context.Context, request *rim
 
 func checkPaymentStatus(client *rimpay.Client, ctx context.Context, transactionID string) {
 	fmt.Printf("   🔍 Checking final status...\n")
-	
+
 	status, err := client.GetPaymentStatus(ctx, transactionID)
 	if err != nil {
 		fmt.Printf("   ❌ Status check failed: %v\n", err)

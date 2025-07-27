@@ -11,7 +11,6 @@ import (
 	"github.com/CatoSystems/rim-pay/pkg/rimpay"
 	"github.com/shopspring/decimal"
 	
-	// Import providers to register them
 )
 
 func main() {
