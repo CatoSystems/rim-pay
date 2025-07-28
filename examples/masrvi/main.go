@@ -48,7 +48,7 @@ func main() {
 	// Example 1: Basic e-commerce payment
 	fmt.Println("🛒 Example 1: E-commerce Purchase")
 	ecommercePayment := createMasrviPayment(
-		"33445566", // Mauritel number
+		"33445566",
 		199.99,     // Amount
 		"Online store purchase - Premium subscription",
 		"ORDER-PREMIUM-001",
@@ -58,7 +58,7 @@ func main() {
 	// Example 2: Service payment with phone number
 	fmt.Println("\n💳 Example 2: Service Payment")
 	servicePayment := createMasrviPayment(
-		"37889900", // Mattel number
+		"37889900",
 		45.00,      // Amount
 		"Internet service payment",
 		"INTERNET-BILL-789",
@@ -68,7 +68,7 @@ func main() {
 	// Example 3: Mobile top-up
 	fmt.Println("\n📱 Example 3: Mobile Top-up")
 	topupPayment := createMasrviPayment(
-		"48990011", // Chinguitel number
+		"48990011",
 		25.50,      // Amount
 		"Mobile credit top-up",
 		"TOPUP-"+fmt.Sprintf("%d", time.Now().Unix()),
@@ -234,7 +234,7 @@ func handleFailedPayment(purchaseRef, errorMsg string) {
 	fmt.Printf("   📋 Order: %s\n", purchaseRef)
 	fmt.Printf("   ❌ Error: %s\n", errorMsg)
 	
-	// Your business logic here:
+	// business logic here:
 	// - Update order status to failed
 	// - Send failure notification
 	// - Offer alternative payment methods

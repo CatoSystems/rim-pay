@@ -2,10 +2,14 @@ package bpay
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
+	"fmt"
+	"math/big"
+	"time"
+
 	"github.com/CatoSystems/rim-pay/internal/providers/common"
 	"github.com/CatoSystems/rim-pay/pkg/rimpay"
-	"time"
 )
 
 // PaymentProcessor handles B-PAY payment operations
@@ -28,6 +32,23 @@ func NewPaymentProcessor(config rimpay.ProviderConfig, httpClient common.HTTPCli
 	}
 }
 
+// generatePasscode generates a secure 4-digit passcode for BPay
+func generatePasscode() (string, error) {
+	// Generate a random number between 1000 and 9999 (4 digits)
+	min := big.NewInt(1000)
+	max := big.NewInt(9999)
+
+	// Calculate the range (max - min + 1)
+	n, err := rand.Int(rand.Reader, new(big.Int).Sub(max, min).Add(new(big.Int).Sub(max, min), big.NewInt(1)))
+	if err != nil {
+		return "", fmt.Errorf("failed to generate random passcode: %w", err)
+	}
+
+	// Add min to get number in range [1000, 9999]
+	passcode := new(big.Int).Add(n, min)
+	return passcode.String(), nil
+}
+
 // ProcessPayment processes a payment request
 func (pp *PaymentProcessor) ProcessPayment(ctx context.Context, request *rimpay.PaymentRequest) (*rimpay.PaymentResponse, error) {
 	// Get access token
@@ -41,10 +62,26 @@ func (pp *PaymentProcessor) ProcessPayment(ctx context.Context, request *rimpay.
 		)
 	}
 
+	// Always generate a new passcode for BPay payments (ignore any provided passcode)
+	passcode, err := generatePasscode()
+	if err != nil {
+		return nil, rimpay.NewPaymentError(
+			rimpay.ErrorCodeInvalidRequest,
+			"failed to generate passcode",
+			"bpay",
+			false,
+		)
+	}
+
+	pp.logger.Info("Generated passcode for BPay payment",
+		"operation_id", request.Reference,
+		"passcode", passcode,
+	)
+
 	// Create B-PAY specific request
 	bpayReq := &PaymentRequest{
 		ClientPhone: request.PhoneNumber.ForProvider(false),
-		Passcode:    request.Passcode,
+		Passcode:    passcode,
 		OperationID: request.Reference,
 		Amount:      request.Amount.ToProviderAmount(false),
 		Language:    convertLanguage(request.GetLanguage()),
@@ -112,16 +149,18 @@ func (pp *PaymentProcessor) ProcessPayment(ctx context.Context, request *rimpay.
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 		Metadata: map[string]interface{}{
-			"error_code":        bpayResp.ErrorCode,
-			"error_message":     bpayResp.ErrorMessage,
-			"transaction_id":    bpayResp.TransactionID,
+			"error_code":         bpayResp.ErrorCode,
+			"error_message":      bpayResp.ErrorMessage,
+			"transaction_id":     bpayResp.TransactionID,
 			"provider_reference": bpayResp.TransactionID,
+			"passcode":           passcode, // Include the passcode for the payer
 		},
 	}
 
 	pp.logger.Info("B-PAY payment response received",
 		"transaction_id", response.TransactionID,
 		"status", response.Status,
+		"passcode", passcode,
 	)
 
 	return response, nil

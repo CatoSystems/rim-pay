@@ -11,12 +11,12 @@ import (
 
 // BPayPaymentRequest represents a B-PAY specific payment request
 type BPayPaymentRequest struct {
-	PhoneNumber *phone.Phone              `json:"phone_number"`
-	Amount      money.Money               `json:"amount"`
-	Description string                    `json:"description"`
-	Reference   string                    `json:"reference"`
-	Passcode    string                    `json:"passcode"`    // B-PAY specific: user passcode
-	Metadata    map[string]interface{}    `json:"metadata,omitempty"`
+	PhoneNumber *phone.Phone           `json:"phone_number"`
+	Amount      money.Money            `json:"amount"`
+	Description string                 `json:"description"`
+	Reference   string                 `json:"reference"`
+	Passcode    string                 `json:"passcode"` // B-PAY specific: user passcode
+	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // Validate validates the B-PAY payment request
@@ -41,21 +41,7 @@ func (r *BPayPaymentRequest) Validate() error {
 		return fmt.Errorf("reference cannot exceed 50 characters")
 	}
 
-	if err := r.validatePasscode(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *BPayPaymentRequest) validatePasscode() error {
-	if strings.TrimSpace(r.Passcode) == "" {
-		return fmt.Errorf("passcode cannot be empty")
-	}
-
-	if len(r.Passcode) < 4 || len(r.Passcode) > 6 {
-		return fmt.Errorf("passcode must be between 4 and 6 characters")
-	}
+	// Note: Passcode validation is not needed as the library always generates a new passcode
 
 	return nil
 }
@@ -66,26 +52,27 @@ func (r *BPayPaymentRequest) ToGenericRequest() *PaymentRequest {
 	for k, v := range r.Metadata {
 		metadata[k] = v
 	}
-	metadata["passcode"] = r.Passcode
+	// Note: Passcode is not included as the library will always generate a new one
 
 	return &PaymentRequest{
 		PhoneNumber: r.PhoneNumber,
 		Amount:      r.Amount,
 		Description: r.Description,
 		Reference:   r.Reference,
+		// Passcode is intentionally empty - library will generate a new one
 		Metadata:    metadata,
 	}
 }
 
 // MasrviPaymentRequest represents a MASRVI specific payment request
 type MasrviPaymentRequest struct {
-	PhoneNumber *phone.Phone              `json:"phone_number"`
-	Amount      money.Money               `json:"amount"`
-	Description string                    `json:"description"`
-	Reference   string                    `json:"reference"`
-	CallbackURL string                    `json:"callback_url"` // MASRVI specific: webhook URL
-	ReturnURL   string                    `json:"return_url"`   // MASRVI specific: return URL after payment
-	Metadata    map[string]interface{}    `json:"metadata,omitempty"`
+	PhoneNumber *phone.Phone           `json:"phone_number"`
+	Amount      money.Money            `json:"amount"`
+	Description string                 `json:"description"`
+	Reference   string                 `json:"reference"`
+	CallbackURL string                 `json:"callback_url"` // MASRVI specific: webhook URL
+	ReturnURL   string                 `json:"return_url"`   // MASRVI specific: return URL after payment
+	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // Validate validates the MASRVI payment request
