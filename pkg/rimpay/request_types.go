@@ -60,7 +60,7 @@ func (r *BPayPaymentRequest) ToGenericRequest() *PaymentRequest {
 		Description: r.Description,
 		Reference:   r.Reference,
 		// Passcode is intentionally empty - library will generate a new one
-		Metadata:    metadata,
+		Metadata: metadata,
 	}
 }
 

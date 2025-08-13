@@ -45,21 +45,21 @@ func TestBPayPasscodeIntegration(t *testing.T) {
 		t.Fatalf("BPay request validation failed: %v", err)
 	}
 	t.Log("✓ BPay request validation passed (passcode not required for validation)")
-	
+
 	// Convert to generic request
 	genericRequest := bpayRequest.ToGenericRequest()
 	t.Logf("Generic request passcode: '%s' (always empty - library generates)", genericRequest.Passcode)
-	
+
 	// Demonstrate what would happen in the payment processor
 	t.Log("\n=== Simulating Payment Processing ===")
-	
+
 	// Step 1: Library ALWAYS generates a new passcode (ignoring any provided)
 	generatedPasscode, err := generatePasscode()
 	if err != nil {
 		t.Fatalf("Failed to generate passcode: %v", err)
 	}
 	passcode := generatedPasscode
-	t.Logf("✓ Library ALWAYS generates new passcode: %s", passcode)	// Step 2: Create BPay API request (this is what gets sent to BPay)
+	t.Logf("✓ Library ALWAYS generates new passcode: %s", passcode) // Step 2: Create BPay API request (this is what gets sent to BPay)
 	bpayAPIRequest := &PaymentRequest{
 		ClientPhone: phoneNum.ForProvider(false),
 		Passcode:    passcode,

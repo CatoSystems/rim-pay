@@ -222,7 +222,7 @@ func handleSuccessfulPayment(purchaseRef, paymentRef, mobile string) {
 	fmt.Printf("   💳 Payment: %s\n", paymentRef)
 	fmt.Printf("   📱 Customer: %s\n", mobile)
 	
-	// Your business logic here:
+	// business logic here:
 	// - Update order status in database
 	// - Send confirmation email/SMS
 	// - Trigger fulfillment process
