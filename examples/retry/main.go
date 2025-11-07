@@ -10,7 +10,6 @@ import (
 	"github.com/CatoSystems/rim-pay/pkg/phone"
 	"github.com/CatoSystems/rim-pay/pkg/rimpay"
 	"github.com/shopspring/decimal"
-	
 )
 
 func main() {
@@ -71,7 +70,7 @@ func main() {
 		// Even if this fails, the retry mechanism would have attempted up to 3 times
 		// for retryable errors before giving up
 		fmt.Printf("❌ Payment failed after retries: %v\n", err)
-		
+
 		// Check if it's a payment error with retry information
 		if paymentErr, ok := err.(*rimpay.PaymentError); ok {
 			fmt.Printf("   Error Code: %s\n", paymentErr.Code)
@@ -87,14 +86,14 @@ func main() {
 	fmt.Printf("   Status: %s\n", resp.Status)
 	fmt.Printf("   Provider: %s\n", resp.Provider)
 	fmt.Printf("   Amount: %s\n", resp.Amount.String())
-	
+
 	fmt.Printf("\n🔄 Retry Configuration:\n")
 	fmt.Printf("   Max Attempts: 3\n")
-	fmt.Printf("   Initial Delay: 1s\n") 
+	fmt.Printf("   Initial Delay: 1s\n")
 	fmt.Printf("   Max Delay: 30s\n")
 	fmt.Printf("   Backoff Multiplier: 2.0x\n")
 	fmt.Printf("   Jitter: Enabled\n")
-	
+
 	fmt.Printf("\n📝 How retry works:\n")
 	fmt.Printf("   • Network errors → Retryable\n")
 	fmt.Printf("   • Authentication failures → Retryable\n")

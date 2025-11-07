@@ -7,7 +7,7 @@ import (
 )
 
 type Phone struct {
-	number   string
+	number string
 }
 
 var mauritanianPattern = regexp.MustCompile(`^(\+222|00222|222)?([234]\d{7})$`)
@@ -23,9 +23,9 @@ func NewPhone(number string) (*Phone, error) {
 	}
 
 	localNumber := extractLocalNumber(cleaned)
-	
+
 	return &Phone{
-		number:   localNumber,
+		number: localNumber,
 	}, nil
 }
 
@@ -48,8 +48,6 @@ func extractLocalNumber(number string) string {
 	}
 	return ""
 }
-
-
 
 func IsValidMauritanianNumber(number string) bool {
 	cleaned := cleanPhoneNumber(number)

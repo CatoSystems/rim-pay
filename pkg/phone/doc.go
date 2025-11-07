@@ -21,29 +21,29 @@ supporting the three main mobile operators with prefixes 2, 3, and 4.
 # Supported Formats
 
 The following phone number formats are accepted:
-	- +22233445566 (international format)
-	- 22233445566 (national format)
-	- 33445566 (local format - prefix 2, 3, or 4 assumed)
+  - +22233445566 (international format)
+  - 22233445566 (national format)
+  - 33445566 (local format - prefix 2, 3, or 4 assumed)
 
 # Valid Prefixes
 
 Mauritanian mobile numbers use the following prefixes:
-	- 2: Mauritel (legacy)
-	- 3: Chinguitel 
-	- 4: Mattel
+  - 2: Mauritel (legacy)
+  - 3: Chinguitel
+  - 4: Mattel
 
 # Validation Rules
 
 Phone numbers must:
-	- Start with country code +222 (optional in input)
-	- Have a valid prefix (2, 3, or 4)
-	- Be exactly 8 digits after the country code
-	- Contain only numeric characters
+  - Start with country code +222 (optional in input)
+  - Have a valid prefix (2, 3, or 4)
+  - Be exactly 8 digits after the country code
+  - Contain only numeric characters
 
 Invalid examples:
-	- +22255667788 (prefix 5 not supported)
-	- +222334455 (too short)
-	- +2223344556677 (too long)
-	- +22233445abc (contains letters)
+  - +22255667788 (prefix 5 not supported)
+  - +222334455 (too short)
+  - +2223344556677 (too long)
+  - +22233445abc (contains letters)
 */
 package phone

@@ -1,8 +1,9 @@
 package rimpay
 
 import (
-	"github.com/CatoSystems/rim-pay/pkg/money"
 	"time"
+
+	"github.com/CatoSystems/rim-pay/pkg/money"
 )
 
 type TransactionStatus struct {

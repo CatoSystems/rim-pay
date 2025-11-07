@@ -91,7 +91,7 @@ func (p *Provider) ProcessBPayPayment(ctx context.Context, request *rimpay.BPayP
 
 	// Convert to generic request for internal processing
 	genericRequest := request.ToGenericRequest()
-	
+
 	return p.ProcessPayment(ctx, genericRequest)
 }
 

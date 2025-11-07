@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"time"
+
 	"github.com/CatoSystems/rim-pay/internal/providers/common"
 	"github.com/CatoSystems/rim-pay/internal/types"
 	"github.com/CatoSystems/rim-pay/pkg/rimpay"
@@ -90,7 +91,7 @@ func (p *Provider) ProcessMasrviPayment(ctx context.Context, request *rimpay.Mas
 
 	// Convert to generic request for internal processing
 	genericRequest := request.ToGenericRequest()
-	
+
 	return p.ProcessPayment(ctx, genericRequest)
 }
 
@@ -133,7 +134,7 @@ func (p *Provider) HandleNotification(notification *rimpay.MasrviNotificationDat
 		PaymentRef:  notification.TransactionID,
 		Timestamp:   notification.Timestamp,
 	}
-	
+
 	return p.paymentProcessor.HandleNotification(internalNotification)
 }
 

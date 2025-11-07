@@ -1,11 +1,12 @@
 package rimpay
 
 import (
+	"testing"
+	"time"
+
 	"github.com/CatoSystems/rim-pay/pkg/money"
 	phone "github.com/CatoSystems/rim-pay/pkg/phone"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 func TestNewClient(t *testing.T) {

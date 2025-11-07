@@ -49,7 +49,7 @@ func main() {
 	fmt.Println("🛒 Example 1: E-commerce Purchase")
 	ecommercePayment := createMasrviPayment(
 		"33445566",
-		199.99,     // Amount
+		199.99, // Amount
 		"Online store purchase - Premium subscription",
 		"ORDER-PREMIUM-001",
 	)
@@ -59,7 +59,7 @@ func main() {
 	fmt.Println("\n💳 Example 2: Service Payment")
 	servicePayment := createMasrviPayment(
 		"37889900",
-		45.00,      // Amount
+		45.00, // Amount
 		"Internet service payment",
 		"INTERNET-BILL-789",
 	)
@@ -69,7 +69,7 @@ func main() {
 	fmt.Println("\n📱 Example 3: Mobile Top-up")
 	topupPayment := createMasrviPayment(
 		"48990011",
-		25.50,      // Amount
+		25.50, // Amount
 		"Mobile credit top-up",
 		"TOPUP-"+fmt.Sprintf("%d", time.Now().Unix()),
 	)
@@ -114,8 +114,8 @@ func createMasrviPayment(phoneNumber string, amount float64, description, refere
 }
 
 func processMasrviPayment(client *rimpay.Client, ctx context.Context, request *rimpay.MasrviPaymentRequest) {
-	fmt.Printf("   Processing: %s → %s\n", 
-		request.PhoneNumber.ForProvider(true), 
+	fmt.Printf("   Processing: %s → %s\n",
+		request.PhoneNumber.ForProvider(true),
 		request.Amount.String())
 	fmt.Printf("   Reference: %s\n", request.Reference)
 	fmt.Printf("   Description: %s\n", request.Description)
@@ -124,7 +124,7 @@ func processMasrviPayment(client *rimpay.Client, ctx context.Context, request *r
 	response, err := client.ProcessMasrviPayment(ctx, request)
 	if err != nil {
 		fmt.Printf("   ❌ Payment failed: %v\n", err)
-		
+
 		if paymentErr, ok := err.(*rimpay.PaymentError); ok {
 			switch paymentErr.Code {
 			case rimpay.ErrorCodeProviderError:
@@ -141,7 +141,7 @@ func processMasrviPayment(client *rimpay.Client, ctx context.Context, request *r
 	fmt.Printf("   ✅ Payment form created successfully!\n")
 	fmt.Printf("   Transaction ID: %s\n", response.TransactionID)
 	fmt.Printf("   Status: %s (pending customer action)\n", response.Status)
-	
+
 	if paymentURL, exists := response.Metadata["payment_url"]; exists {
 		fmt.Printf("   🌐 Payment URL: %s\n", paymentURL)
 		fmt.Printf("   💡 Customer should be redirected to this URL to complete payment\n")
@@ -155,7 +155,7 @@ func processMasrviPayment(client *rimpay.Client, ctx context.Context, request *r
 // Webhook server to handle MASRVI notifications
 func startWebhookServer() {
 	http.HandleFunc("/webhook", handleWebhook)
-	
+
 	fmt.Println("🚀 Starting webhook server on :8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Printf("Webhook server error: %v", err)
@@ -190,7 +190,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("   Pay ID: %s\n", payID)
 	fmt.Printf("   Timestamp: %s\n", timestamp)
 	fmt.Printf("   IP Address: %s\n", ipAddr)
-	
+
 	if errorMsg != "" {
 		fmt.Printf("   Error: %s\n", errorMsg)
 	}
@@ -201,12 +201,12 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("   ✅ Payment successful!\n")
 		// Update your database, send confirmation email, etc.
 		handleSuccessfulPayment(purchaseRef, paymentRef, mobile)
-		
+
 	case "NOK":
 		fmt.Printf("   ❌ Payment failed!\n")
 		// Handle failed payment
 		handleFailedPayment(purchaseRef, errorMsg)
-		
+
 	default:
 		fmt.Printf("   ❓ Unknown status: %s\n", status)
 	}
@@ -221,7 +221,7 @@ func handleSuccessfulPayment(purchaseRef, paymentRef, mobile string) {
 	fmt.Printf("   📋 Order: %s\n", purchaseRef)
 	fmt.Printf("   💳 Payment: %s\n", paymentRef)
 	fmt.Printf("   📱 Customer: %s\n", mobile)
-	
+
 	// business logic here:
 	// - Update order status in database
 	// - Send confirmation email/SMS
@@ -233,7 +233,7 @@ func handleFailedPayment(purchaseRef, errorMsg string) {
 	fmt.Printf("   💔 Processing failed payment:\n")
 	fmt.Printf("   📋 Order: %s\n", purchaseRef)
 	fmt.Printf("   ❌ Error: %s\n", errorMsg)
-	
+
 	// business logic here:
 	// - Update order status to failed
 	// - Send failure notification

@@ -1,12 +1,12 @@
 package common
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"crypto/rand"
 	"regexp"
 	"strconv"
 	"strings"
@@ -181,7 +181,6 @@ func FromJSON(jsonStr string, v interface{}) error {
 func IsValidUUID(uuid string) bool {
 	uuidRegex := regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}`)
 	return uuidRegex.MatchString(uuid)
-
 }
 
 func SliceContains(slice []string, item string) bool {

@@ -1,9 +1,10 @@
 package types
 
 import (
+	"time"
+
 	"github.com/CatoSystems/rim-pay/pkg/money"
 	"github.com/CatoSystems/rim-pay/pkg/phone"
-	"time"
 )
 
 // PaymentStatus represents the status of a payment

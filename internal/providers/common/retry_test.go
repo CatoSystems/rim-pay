@@ -142,9 +142,9 @@ func testNonRetryableErrorFailsImmediately(t *testing.T) {
 func TestRetryExecutorContextCancellation(t *testing.T) {
 	config := DefaultRetryConfig()
 	config.InitialDelay = 100 * time.Millisecond // Longer delay to test cancellation
-	
+
 	executor := NewRetryExecutor(config)
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
 	mockFunc := func() (*types.PaymentResponse, error) {
@@ -159,11 +159,11 @@ func TestRetryExecutorContextCancellation(t *testing.T) {
 	start := time.Now()
 	_, err := executor.ExecutePayment(ctx, mockFunc)
 	duration := time.Since(start)
-	
+
 	if err != context.DeadlineExceeded {
 		t.Errorf("Expected context.DeadlineExceeded, got %v", err)
 	}
-	
+
 	// Should cancel quickly, not wait for full retry delay
 	if duration > 200*time.Millisecond {
 		t.Errorf("Expected quick cancellation, but took %v", duration)
@@ -172,7 +172,7 @@ func TestRetryExecutorContextCancellation(t *testing.T) {
 
 func TestDefaultRetryConfig(t *testing.T) {
 	config := DefaultRetryConfig()
-	
+
 	if config.MaxAttempts != 3 {
 		t.Errorf("Expected MaxAttempts=3, got %d", config.MaxAttempts)
 	}

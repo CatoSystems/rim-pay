@@ -2,10 +2,11 @@ package common
 
 import (
 	"context"
-	"github.com/CatoSystems/rim-pay/internal/types"
 	"math"
 	"math/rand"
 	"time"
+
+	"github.com/CatoSystems/rim-pay/internal/types"
 )
 
 type RetryConfig struct {

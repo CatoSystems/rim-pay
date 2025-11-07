@@ -3,12 +3,13 @@ package masrvi
 import (
 	"context"
 	"fmt"
-	"github.com/CatoSystems/rim-pay/internal/providers/common"
-	"github.com/CatoSystems/rim-pay/pkg/rimpay"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/CatoSystems/rim-pay/internal/providers/common"
+	"github.com/CatoSystems/rim-pay/pkg/rimpay"
 )
 
 // SessionManager handles MASRVI session management

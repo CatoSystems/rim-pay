@@ -6,8 +6,10 @@ import (
 )
 
 // Re-export types from internal/types for public API
-type ErrorCode = types.ErrorCode
-type PaymentError = types.PaymentError
+type (
+	ErrorCode    = types.ErrorCode
+	PaymentError = types.PaymentError
+)
 
 // Re-export constants
 const (

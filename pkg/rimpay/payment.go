@@ -5,10 +5,12 @@ import (
 )
 
 // Re-export types from internal/types for public API
-type PaymentStatus = types.PaymentStatus
-type Language = types.Language
-type PaymentRequest = types.PaymentRequest
-type PaymentResponse = types.PaymentResponse
+type (
+	PaymentStatus   = types.PaymentStatus
+	Language        = types.Language
+	PaymentRequest  = types.PaymentRequest
+	PaymentResponse = types.PaymentResponse
+)
 
 // Re-export constants
 const (

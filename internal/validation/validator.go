@@ -1,10 +1,11 @@
 package validation
 
 import (
+	"regexp"
+
 	"github.com/CatoSystems/rim-pay/internal/types"
 	"github.com/CatoSystems/rim-pay/pkg/money"
 	"github.com/CatoSystems/rim-pay/pkg/phone"
-	"regexp"
 )
 
 type Validator struct {
@@ -57,7 +58,6 @@ func (v *Validator) ValidatePaymentRequest(request *types.PaymentRequest) error 
 	if request.CallbackURL != "" && !v.isValidURL(request.CallbackURL) {
 		return types.NewValidationError("callback_url", errInvalidURLFormat)
 	}
-	
 
 	// Validate description length
 	if len(request.Description) > 255 {

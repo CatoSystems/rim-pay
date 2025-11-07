@@ -1,4 +1,3 @@
-
 package rimpay
 
 import (
@@ -11,7 +10,7 @@ import (
 const (
 	ProviderBPay   = "bpay"
 	ProviderMasrvi = "masrvi"
-	
+
 	// Error message constants
 	providerNotAvailableMsg = "provider %s not available"
 )

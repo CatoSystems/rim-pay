@@ -1,10 +1,11 @@
 package bpay
 
 import (
-	"github.com/CatoSystems/rim-pay/pkg/rimpay"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/CatoSystems/rim-pay/pkg/rimpay"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestValidateConfig(t *testing.T) {

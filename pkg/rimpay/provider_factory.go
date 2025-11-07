@@ -7,7 +7,7 @@ func (c *Client) AddBPayProvider(config ProviderConfig) error {
 	if createBPayProvider == nil {
 		return fmt.Errorf("B-PAY provider not registered")
 	}
-	
+
 	// Create provider using the registered factory
 	provider, err := createBPayProvider(config, c.logger)
 	if err != nil {
@@ -21,7 +21,7 @@ func (c *Client) AddMasrviProvider(config ProviderConfig) error {
 	if createMasrviProvider == nil {
 		return fmt.Errorf("MASRVI provider not registered")
 	}
-	
+
 	// Create provider using the registered factory
 	provider, err := createMasrviProvider(config, c.logger)
 	if err != nil {

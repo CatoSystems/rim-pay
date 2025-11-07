@@ -2,8 +2,9 @@ package rimpay
 
 import (
 	"context"
-	"github.com/CatoSystems/rim-pay/pkg/money"
 	"time"
+
+	"github.com/CatoSystems/rim-pay/pkg/money"
 )
 
 type PaymentProvider interface {

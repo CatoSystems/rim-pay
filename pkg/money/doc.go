@@ -28,23 +28,23 @@ currency and provides convenient methods for money operations.
 # Currency Support
 
 Currently supports:
-	- MRU: Mauritanian Ouguiya (current since January 1, 2018; 1 MRU = 100 cents)
+  - MRU: Mauritanian Ouguiya (current since January 1, 2018; 1 MRU = 100 cents)
 
 Note: The old MRO currency was replaced by MRU on January 1, 2018, at a rate of 10 MRO = 1 MRU.
 
 # Precision
 
 All calculations use decimal arithmetic to maintain precision:
-	- No floating-point rounding errors
-	- Exact decimal representation
-	- Safe for financial calculations
+  - No floating-point rounding errors
+  - Exact decimal representation
+  - Safe for financial calculations
 
 # Validation
 
 Money amounts are validated to ensure:
-	- Positive values only
-	- Valid currency codes
-	- Proper decimal precision (2 decimal places for MRU)
+  - Positive values only
+  - Valid currency codes
+  - Proper decimal precision (2 decimal places for MRU)
 
 # Thread Safety
 

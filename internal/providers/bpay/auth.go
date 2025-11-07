@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/CatoSystems/rim-pay/internal/providers/common"
-	"github.com/CatoSystems/rim-pay/pkg/rimpay"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
+
+	"github.com/CatoSystems/rim-pay/internal/providers/common"
+	"github.com/CatoSystems/rim-pay/pkg/rimpay"
 )
 
 type AuthManager struct {
