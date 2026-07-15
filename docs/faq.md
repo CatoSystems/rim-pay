@@ -108,7 +108,7 @@ request := &rimpay.BPayPaymentRequest{
     PhoneNumber: phone,
     Reference:   "ORDER-123",
     Description: "Payment description",
-    Passcode:    "1234", // Customer's mobile money PIN
+    Passcode:    "1234", // 4-digit Bankily verification code from the customer
 }
 
 response, err := client.ProcessBPayPayment(ctx, request)

@@ -11,6 +11,7 @@ This directory contains comprehensive examples demonstrating various aspects of 
 | [basic-usage](../examples/basic-usage/) | Simple payment processing | Client creation, basic B-PAY payment |
 | [bpay](../examples/bpay/) | B-PAY specific features | OAuth authentication, status checking |
 | [masrvi](../examples/masrvi/) | MASRVI specific features | API key auth, webhooks |
+| [click](../examples/click/) | CLICK (BNM/TagPay) features | Hosted page, order form, notifications |
 
 ### Advanced Examples
 
@@ -71,17 +72,19 @@ make configuration
 
 **Key code:**
 ```go
-// Configure client
+// Configure client (blank-import _ ".../pkg/providers" to register factories)
 config := rimpay.DefaultConfig()
 config.DefaultProvider = "bpay"
+config.Providers["bpay"] = bpayConfig
 client, err := rimpay.NewClient(config)
+_ = client.AddBPayProvider(config.Providers["bpay"])
 
 // Create payment
 request := &rimpay.BPayPaymentRequest{
     Amount:      money.New(decimal.NewFromInt(10000), money.MRU),
     PhoneNumber: phone,
     Reference:   "ORDER-123",
-    Passcode:    "1234",
+    Passcode:    "1234", // one-time Bankily verification code from the customer
 }
 
 // Process payment
@@ -176,7 +179,7 @@ func processOrderPayment(orderID string, customerPhone string, amount decimal.De
         PhoneNumber: phone,
         Reference:   fmt.Sprintf("ORDER-%s", orderID),
         Description: fmt.Sprintf("Payment for order %s", orderID),
-        Passcode:    getCustomerPIN(customerPhone), // Get from secure input
+        Passcode:    collectPasscodeFromCustomer(customerPhone), // one-time Bankily code from the customer
     }
     
     // Process payment
@@ -202,7 +205,9 @@ func processSubscriptionPayment(subscriptionID string, amount decimal.Decimal) e
         PhoneNumber: subscription.Phone,
         Reference:   fmt.Sprintf("SUB-%s-%s", subscriptionID, time.Now().Format("200601")),
         Description: "Monthly subscription payment",
-        Passcode:    subscription.StoredPIN, // Securely stored
+        // The Bankily verification code is one-time per transaction and cannot
+        // be stored — it must be collected from the customer each time.
+        Passcode: collectPasscodeFromCustomer(subscription.Phone),
     }
     
     response, err := client.ProcessBPayPayment(ctx, request)
@@ -229,7 +234,7 @@ func processMarketplacePayment(orderID string, vendorID string, platformFee deci
         PhoneNumber: getCustomerPhone(orderID),
         Reference:   fmt.Sprintf("MARKETPLACE-%s", orderID),
         Description: "Marketplace purchase",
-        Passcode:    getCustomerPIN(orderID),
+        Passcode:    collectPasscodeFromCustomer(orderID), // one-time Bankily code from the customer
     }
     
     response, err := client.ProcessBPayPayment(ctx, request)

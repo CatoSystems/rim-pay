@@ -22,6 +22,27 @@ type BPayProvider interface {
 	ValidateConfig() error
 }
 
+// ClickProvider represents the CLICK (TagPay/BNM) payment provider interface
+type ClickProvider interface {
+	// Name returns the provider name
+	Name() string
+
+	// IsAvailable checks if the provider is available
+	IsAvailable(ctx context.Context) bool
+
+	// ProcessClickPayment processes a CLICK payment
+	ProcessClickPayment(ctx context.Context, request *ClickPaymentRequest) (*PaymentResponse, error)
+
+	// GetPaymentStatus gets payment status (note: CLICK uses notifications)
+	GetPaymentStatus(ctx context.Context, transactionID string) (*TransactionStatus, error)
+
+	// HandleNotification handles CLICK server-to-server notifications
+	HandleNotification(notification *ClickNotificationData) (*TransactionStatus, error)
+
+	// ValidateConfig validates provider configuration
+	ValidateConfig() error
+}
+
 // MasrviProvider represents the MASRVI payment provider interface
 type MasrviProvider interface {
 	// Name returns the provider name

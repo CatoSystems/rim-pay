@@ -10,6 +10,7 @@ import (
 const (
 	ProviderBPay   = "bpay"
 	ProviderMasrvi = "masrvi"
+	ProviderClick  = "click"
 
 	// Error message constants
 	providerNotAvailableMsg = "provider %s not available"
@@ -19,6 +20,7 @@ const (
 var (
 	createBPayProvider   func(ProviderConfig, Logger) (PaymentProvider, error)
 	createMasrviProvider func(ProviderConfig, Logger) (PaymentProvider, error)
+	createClickProvider  func(ProviderConfig, Logger) (PaymentProvider, error)
 )
 
 // RegisterBPayProvider registers the B-PAY provider factory
@@ -29,6 +31,11 @@ func RegisterBPayProvider(factory func(ProviderConfig, Logger) (PaymentProvider,
 // RegisterMasrviProvider registers the MASRVI provider factory
 func RegisterMasrviProvider(factory func(ProviderConfig, Logger) (PaymentProvider, error)) {
 	createMasrviProvider = factory
+}
+
+// RegisterClickProvider registers the CLICK provider factory
+func RegisterClickProvider(factory func(ProviderConfig, Logger) (PaymentProvider, error)) {
+	createClickProvider = factory
 }
 
 // Client represents the main payment client
@@ -138,6 +145,44 @@ func (c *Client) HandleMasrviNotification(notification *MasrviNotificationData) 
 	}
 
 	return masrviProvider.HandleNotification(notification)
+}
+
+// ProcessClickPayment processes a payment using the CLICK provider
+func (c *Client) ProcessClickPayment(ctx context.Context, request *ClickPaymentRequest) (*PaymentResponse, error) {
+	if request == nil {
+		return nil, ErrInvalidRequest
+	}
+
+	provider, ok := c.providers[ProviderClick]
+	if !ok {
+		return nil, fmt.Errorf(providerNotAvailableMsg, ProviderClick)
+	}
+
+	clickProvider, ok := provider.(ClickProvider)
+	if !ok {
+		return nil, fmt.Errorf("provider %s does not implement ClickProvider interface", ProviderClick)
+	}
+
+	return clickProvider.ProcessClickPayment(ctx, request)
+}
+
+// HandleClickNotification handles CLICK server-to-server notifications
+func (c *Client) HandleClickNotification(notification *ClickNotificationData) (*TransactionStatus, error) {
+	if notification == nil {
+		return nil, ErrInvalidRequest
+	}
+
+	provider, ok := c.providers[ProviderClick]
+	if !ok {
+		return nil, fmt.Errorf(providerNotAvailableMsg, ProviderClick)
+	}
+
+	clickProvider, ok := provider.(ClickProvider)
+	if !ok {
+		return nil, fmt.Errorf("provider %s does not implement ClickProvider interface", ProviderClick)
+	}
+
+	return clickProvider.HandleNotification(notification)
 }
 
 // ProcessPayment processes a payment using the generic interface (deprecated)

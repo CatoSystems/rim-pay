@@ -34,6 +34,7 @@ import (
     "github.com/CatoSystems/rim-pay/pkg/rimpay"
     "github.com/CatoSystems/rim-pay/pkg/phone"
     "github.com/CatoSystems/rim-pay/pkg/money"
+    _ "github.com/CatoSystems/rim-pay/pkg/providers" // register all providers
     "github.com/shopspring/decimal"
 )
 
@@ -59,6 +60,11 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
+
+    // Register the B-PAY provider instance on the client
+    if err := client.AddBPayProvider(config.Providers["bpay"]); err != nil {
+        log.Fatal(err)
+    }
     
     // Create payment request
     phone, _ := phone.NewPhone("+22233445566")
@@ -69,7 +75,9 @@ func main() {
         PhoneNumber: phone,
         Reference:   "ORDER-12345",
         Description: "Payment for order 12345",
-        Passcode:    "1234",
+        // 4-digit verification code Bankily gives the customer after they push
+        // funds to the merchant; collected from the customer, never generated.
+        Passcode: "1234",
     }
     
     // Process payment
@@ -274,11 +282,42 @@ config.Providers["masrvi"] = rimpay.ProviderConfig{
 // Use different providers for different requests
 client, _ := rimpay.NewClient(config)
 
+// Register the provider instances you configured above
+_ = client.AddBPayProvider(config.Providers["bpay"])
+_ = client.AddMasrviProvider(config.Providers["masrvi"])
+
 // B-PAY payment
 bpayResponse, err := client.ProcessBPayPayment(ctx, bpayRequest)
 
 // MASRVI payment  
 masrviResponse, err := client.ProcessMasrviPayment(ctx, masrviRequest)
+```
+
+### CLICK (BNM) Payments
+
+CLICK is BNM's TagPay hosted-page integration. The library returns the order
+form to POST to the hosted page, and you parse the notification TagPay sends
+back. See [docs/providers/click.md](docs/providers/click.md).
+
+```go
+config.Providers["click"] = rimpay.ProviderConfig{
+    Enabled:     true,
+    BaseURL:     "https://tagpay.example",
+    Credentials: map[string]string{"merchant_id": "0896353536734538"},
+    Timeout:     30 * time.Second,
+}
+client, _ := rimpay.NewClient(config)
+_ = client.AddClickProvider(config.Providers["click"])
+
+resp, err := client.ProcessClickPayment(ctx, &rimpay.ClickPaymentRequest{
+    Amount:     money.New(decimal.NewFromInt(1500), "MRU"),
+    Reference:  "ORDER-789",
+    SuccessURL: "https://yoursite.com/ok",
+    FailureURL: "https://yoursite.com/fail",
+})
+// Redirect the customer's browser to resp.PaymentURL, POSTing
+// resp.Metadata["form_data"]. Then handle the TagPay notification:
+//   status, _ := client.HandleClickNotification(&rimpay.ClickNotificationData{...})
 ```
 
 ## API Reference

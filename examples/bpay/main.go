@@ -8,6 +8,7 @@ import (
 
 	"github.com/CatoSystems/rim-pay/pkg/money"
 	"github.com/CatoSystems/rim-pay/pkg/phone"
+	_ "github.com/CatoSystems/rim-pay/pkg/providers" // register all providers
 	"github.com/CatoSystems/rim-pay/pkg/rimpay"
 	"github.com/shopspring/decimal"
 )
@@ -37,6 +38,11 @@ func main() {
 	client, err := rimpay.NewClient(config)
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
+	}
+
+	// Register the B-PAY provider instance on the client.
+	if err := client.AddBPayProvider(config.Providers["bpay"]); err != nil {
+		log.Fatalf("Failed to add B-PAY provider: %v", err)
 	}
 
 	fmt.Println("🔐 B-PAY Authentication Flow")
@@ -117,7 +123,11 @@ func createBPayPayment(phoneNumber string, amount float64, description string) *
 		PhoneNumber: phone,
 		Reference:   fmt.Sprintf("BPAY-%d", time.Now().UnixNano()),
 		Description: description,
-		Passcode:    "1234", // Customer's mobile money PIN
+		// The 4-digit verification code Bankily gives the customer AFTER they
+		// push the funds to the merchant account via the Bankily app. It is
+		// collected from the customer and passed in here — the library never
+		// generates it.
+		Passcode: "1234",
 	}
 }
 
@@ -137,7 +147,7 @@ func processBPayPayment(client *rimpay.Client, ctx context.Context, request *rim
 			case rimpay.ErrorCodeInsufficientFunds:
 				fmt.Printf("   💡 Customer needs to add funds\n")
 			case rimpay.ErrorCodePaymentDeclined:
-				fmt.Printf("   💡 Customer entered wrong PIN\n")
+				fmt.Printf("   💡 Wrong or expired passcode\n")
 			case rimpay.ErrorCodeNetworkError:
 				fmt.Printf("   💡 Network issue - payment was retried automatically\n")
 			}

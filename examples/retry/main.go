@@ -8,6 +8,7 @@ import (
 
 	"github.com/CatoSystems/rim-pay/pkg/money"
 	"github.com/CatoSystems/rim-pay/pkg/phone"
+	_ "github.com/CatoSystems/rim-pay/pkg/providers" // register all providers
 	"github.com/CatoSystems/rim-pay/pkg/rimpay"
 	"github.com/shopspring/decimal"
 )
@@ -35,6 +36,11 @@ func main() {
 	client, err := rimpay.NewClient(config)
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
+	}
+
+	// Register the B-PAY provider instance on the client.
+	if err := client.AddBPayProvider(config.Providers["bpay"]); err != nil {
+		log.Fatalf("Failed to add B-PAY provider: %v", err)
 	}
 
 	// Create phone number

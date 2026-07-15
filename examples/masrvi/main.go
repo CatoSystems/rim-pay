@@ -9,6 +9,7 @@ import (
 
 	"github.com/CatoSystems/rim-pay/pkg/money"
 	"github.com/CatoSystems/rim-pay/pkg/phone"
+	_ "github.com/CatoSystems/rim-pay/pkg/providers" // register all providers
 	"github.com/CatoSystems/rim-pay/pkg/rimpay"
 	"github.com/shopspring/decimal"
 )
@@ -37,11 +38,16 @@ func main() {
 		log.Fatalf("Failed to create client: %v", err)
 	}
 
+	// Register the MASRVI provider instance on the client.
+	if err := client.AddMasrviProvider(config.Providers["masrvi"]); err != nil {
+		log.Fatalf("Failed to add MASRVI provider: %v", err)
+	}
+
 	fmt.Println("🔐 MASRVI Session Management")
 	fmt.Println("The library handles session management automatically:")
 	fmt.Println("1. Requests session ID using merchant ID")
 	fmt.Println("2. Session is valid for 5 minutes")
-	fmt.Println("3. Automatically creates new sessions when needed\n")
+	fmt.Println("3. Automatically creates new sessions when needed")
 
 	ctx := context.Background()
 

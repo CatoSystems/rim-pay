@@ -45,7 +45,15 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
+
+    // Register the B-PAY provider instance on the client
+    if err := client.AddBPayProvider(config.Providers["bpay"]); err != nil {
+        log.Fatal(err)
+    }
 ```
+
+> **Note:** blank-import `_ "github.com/CatoSystems/rim-pay/pkg/providers"` so the
+> provider factories register themselves before you call `AddBPayProvider`.
 
 ## Step 3: Create a Payment Request
 
@@ -65,7 +73,7 @@ func main() {
         PhoneNumber: phone,
         Reference:   "ORDER-12345",
         Description: "Payment for order 12345",
-        Passcode:    "1234", // Customer's mobile money PIN
+        Passcode:    "1234", // 4-digit Bankily verification code from the customer
     }
 ```
 
@@ -101,6 +109,7 @@ import (
     "github.com/CatoSystems/rim-pay/pkg/rimpay"
     "github.com/CatoSystems/rim-pay/pkg/phone"
     "github.com/CatoSystems/rim-pay/pkg/money"
+    _ "github.com/CatoSystems/rim-pay/pkg/providers" // register all providers
     "github.com/shopspring/decimal"
 )
 
@@ -126,6 +135,11 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
+
+    // Register the B-PAY provider instance on the client
+    if err := client.AddBPayProvider(config.Providers["bpay"]); err != nil {
+        log.Fatal(err)
+    }
     
     // Create phone number
     phone, err := phone.NewPhone("+22233445566")
@@ -142,7 +156,7 @@ func main() {
         PhoneNumber: phone,
         Reference:   "ORDER-12345",
         Description: "Payment for order 12345",
-        Passcode:    "1234",
+        Passcode:    "1234", // 4-digit Bankily verification code from the customer
     }
     
     // Process payment

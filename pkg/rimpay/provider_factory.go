@@ -30,6 +30,34 @@ func (c *Client) AddMasrviProvider(config ProviderConfig) error {
 	return c.AddProvider(ProviderMasrvi, provider)
 }
 
+// AddClickProvider adds a CLICK provider to the client
+func (c *Client) AddClickProvider(config ProviderConfig) error {
+	if createClickProvider == nil {
+		return fmt.Errorf("CLICK provider not registered")
+	}
+
+	provider, err := createClickProvider(config, c.logger)
+	if err != nil {
+		return err
+	}
+	return c.AddProvider(ProviderClick, provider)
+}
+
+// GetClickProvider returns the CLICK provider if available
+func (c *Client) GetClickProvider() (ClickProvider, error) {
+	provider, ok := c.providers[ProviderClick]
+	if !ok {
+		return nil, ErrProviderNotFound
+	}
+
+	clickProvider, ok := provider.(ClickProvider)
+	if !ok {
+		return nil, ErrInvalidProvider
+	}
+
+	return clickProvider, nil
+}
+
 // GetBPayProvider returns the B-PAY provider if available
 func (c *Client) GetBPayProvider() (BPayProvider, error) {
 	provider, ok := c.providers[ProviderBPay]

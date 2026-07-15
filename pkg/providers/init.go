@@ -7,5 +7,6 @@ import (
 	// Import provider packages to trigger their init() functions
 	// which register the providers with the RimPay client
 	_ "github.com/CatoSystems/rim-pay/internal/providers/bpay"
+	_ "github.com/CatoSystems/rim-pay/internal/providers/click"
 	_ "github.com/CatoSystems/rim-pay/internal/providers/masrvi"
 )

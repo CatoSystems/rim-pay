@@ -41,9 +41,29 @@ func (r *BPayPaymentRequest) Validate() error {
 		return fmt.Errorf("reference cannot exceed 50 characters")
 	}
 
-	// Note: Passcode validation is not needed as the library always generates a new passcode
+	if strings.TrimSpace(r.Passcode) == "" {
+		return fmt.Errorf("passcode is required (the customer's Bankily verification code)")
+	}
+
+	if !isFourDigitPasscode(r.Passcode) {
+		return fmt.Errorf("passcode must be exactly 4 digits")
+	}
 
 	return nil
+}
+
+// isFourDigitPasscode reports whether s is exactly four ASCII digits, matching
+// the Bankily B-PAY passcode format.
+func isFourDigitPasscode(s string) bool {
+	if len(s) != 4 {
+		return false
+	}
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // ToGenericRequest converts B-PAY request to generic payment request
@@ -52,15 +72,14 @@ func (r *BPayPaymentRequest) ToGenericRequest() *PaymentRequest {
 	for k, v := range r.Metadata {
 		metadata[k] = v
 	}
-	// Note: Passcode is not included as the library will always generate a new one
 
 	return &PaymentRequest{
 		PhoneNumber: r.PhoneNumber,
 		Amount:      r.Amount,
 		Description: r.Description,
 		Reference:   r.Reference,
-		// Passcode is intentionally empty - library will generate a new one
-		Metadata: metadata,
+		Passcode:    r.Passcode,
+		Metadata:    metadata,
 	}
 }
 
@@ -176,4 +195,83 @@ type MasrviNotificationData struct {
 	PhoneNumber   string                 `json:"phone_number"`
 	Timestamp     string                 `json:"timestamp"`
 	Data          map[string]interface{} `json:"data,omitempty"`
+}
+
+// ClickPaymentRequest represents a CLICK (TagPay/BNM) specific payment request.
+type ClickPaymentRequest struct {
+	PhoneNumber *phone.Phone           `json:"phone_number,omitempty"` // optional
+	Amount      money.Money            `json:"amount"`
+	Reference   string                 `json:"reference"`
+	Description string                 `json:"description,omitempty"`
+	SuccessURL  string                 `json:"success_url,omitempty"`
+	FailureURL  string                 `json:"failure_url,omitempty"`
+	CancelURL   string                 `json:"cancel_url,omitempty"`
+	Brand       string                 `json:"brand,omitempty"`
+	Language    Language               `json:"language,omitempty"`
+	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+}
+
+// Validate validates the CLICK payment request.
+func (r *ClickPaymentRequest) Validate() error {
+	if r.Amount.IsZero() {
+		return fmt.Errorf("amount must be positive")
+	}
+	if strings.TrimSpace(r.Reference) == "" {
+		return fmt.Errorf("reference cannot be empty")
+	}
+	if len(r.Reference) > 250 {
+		return fmt.Errorf("reference cannot exceed 250 characters")
+	}
+	if len(r.Description) > 255 {
+		return fmt.Errorf("description cannot exceed 255 characters")
+	}
+	return nil
+}
+
+// GetLanguage returns the language with fallback to French.
+func (r *ClickPaymentRequest) GetLanguage() Language {
+	if r.Language == "" {
+		return LanguageFrench
+	}
+	return r.Language
+}
+
+// ToGenericRequest converts CLICK request to the generic payment request.
+func (r *ClickPaymentRequest) ToGenericRequest() *PaymentRequest {
+	metadata := make(map[string]interface{})
+	for k, v := range r.Metadata {
+		metadata[k] = v
+	}
+	if r.Brand != "" {
+		metadata["brand"] = r.Brand
+	}
+	return &PaymentRequest{
+		PhoneNumber: r.PhoneNumber,
+		Amount:      r.Amount,
+		Reference:   r.Reference,
+		Description: r.Description,
+		Language:    r.GetLanguage(),
+		SuccessURL:  r.SuccessURL,
+		FailureURL:  r.FailureURL,
+		CancelURL:   r.CancelURL,
+		Metadata:    metadata,
+	}
+}
+
+// ClickNotificationData is the public shape of a TagPay server-to-server
+// notification (GET query parameters) for the CLICK provider.
+type ClickNotificationData struct {
+	Status      string `json:"status"` // OK / NOK
+	PurchaseRef string `json:"purchaseref"`
+	Amount      string `json:"amount"`
+	Currency    string `json:"currency"`
+	ClientID    string `json:"clientid"`
+	ClientName  string `json:"cname"`
+	Mobile      string `json:"mobile"`
+	PaymentRef  string `json:"paymentref"`
+	PayID       string `json:"payid"`
+	Timestamp   string `json:"timestamp"`
+	IPAddress   string `json:"ipaddr"`
+	Error       string `json:"error,omitempty"`
+	Reason      string `json:"reason,omitempty"`
 }

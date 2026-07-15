@@ -338,7 +338,7 @@ func TestBPayIntegration(t *testing.T) {
 
     t.Run("invalid_pin", func(t *testing.T) {
         request := createValidBPayRequest()
-        request.Passcode = "9999" // Invalid PIN
+        request.Passcode = "9999" // Wrong verification code
         
         ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
         defer cancel()
